@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\MaterialController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\PosController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\CashFlowController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,4 +62,8 @@ Route::middleware(['auth', 'role:admin,cashier'])->prefix('admin')->group(functi
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+
+    // Laporan Keuangan & Cash Flow (Baru)
+    Route::get('/cash-flows', [CashFlowController::class, 'index'])->name('cash_flows.index');
+    Route::post('/cash-flows', [CashFlowController::class, 'store'])->name('cash_flows.store');
 });

@@ -4,12 +4,12 @@
 <div class="flex justify-between items-center mb-6">
     <div>
         <h2 class="text-2xl font-bold text-gray-800">Manajemen Pesanan Online</h2>
-        <p class="text-gray-600 text-sm">Daftar pesanan masuk dari website e-commerce (Delivery & Pickup).</p>
+        <p class="text-gray-600 text-sm">Daftar pesanan masuk eksklusif dari website e-commerce.</p>
     </div>
     
     <!-- Filter Status -->
     <div class="flex space-x-2">
-        <a href="{{ route('orders.index') }}" class="px-3 py-1.5 text-xs rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300">Semua</a>
+        <a href="{{ route('orders.index') }}" class="px-3 py-1.5 text-xs rounded-md bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300">Semua Online</a>
         <a href="{{ route('orders.index', ['status' => 'pending']) }}" class="px-3 py-1.5 text-xs rounded-md bg-amber-100 text-amber-800 font-semibold hover:bg-amber-200">Pending</a>
         <a href="{{ route('orders.index', ['status' => 'processing']) }}" class="px-3 py-1.5 text-xs rounded-md bg-blue-100 text-blue-800 font-semibold hover:bg-blue-200">Diproses</a>
         <a href="{{ route('orders.index', ['status' => 'completed']) }}" class="px-3 py-1.5 text-xs rounded-md bg-emerald-100 text-emerald-800 font-semibold hover:bg-emerald-200">Selesai</a>
@@ -43,13 +43,11 @@
                 </td>
                 <td class="p-4">
                     <p class="font-semibold text-gray-900">{{ $order->customer_name }}</p>
-                    <p class="text-xs text-gray-500">{{ $order->customer_phone }}</p>
+                    <p class="text-xs text-gray-500">{{ $order->customer_phone ?? '-' }}</p>
                 </td>
                 <td class="p-4">
-                    <span class="inline-block px-2 py-0.5 text-xs font-bold rounded uppercase bg-slate-100 text-slate-700">
-                        {{ $order->order_type }}
-                    </span>
-                    <span class="block text-xs text-gray-500 uppercase mt-0.5">{{ $order->payment_method }}</span>
+                    <span class="inline-block px-2 py-0.5 text-xs font-bold rounded uppercase bg-purple-100 text-purple-700">WEB ONLINE</span>
+                    <span class="block text-xs text-gray-500 uppercase mt-1">{{ $order->payment_method }}</span>
                 </td>
                 <td class="p-4 font-extrabold text-amber-600">
                     Rp{{ number_format($order->total_amount, 0, ',', '.') }}
@@ -67,7 +65,7 @@
                 </td>
                 <td class="p-4 text-center">
                     <a href="{{ route('orders.show', $order->id) }}" class="inline-block bg-slate-900 hover:bg-slate-800 text-white text-xs px-3 py-1.5 rounded font-semibold">
-                        Detail & Ubah Status
+                        Detail Pesanan
                     </a>
                 </td>
             </tr>

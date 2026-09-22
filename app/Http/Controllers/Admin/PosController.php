@@ -7,6 +7,7 @@ use App\Models\Menu;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Material;
+use App\Models\CashFlow;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -14,79 +15,124 @@ class PosController extends Controller
 {
     public function index()
     {
-        $menus = Menu::where('is_active', true)->get();
-        return view('admin.pos.index', compact('menus'));
+        $menus = Menu::with('materials')->where('is_active', true)->get();
+        
+        // Narik 20 riwayat transaksi POS terakhir buat ditampilin di panel kasir
+        $recentPosOrders = Order::where('invoice_number', 'like', 'NOTTE-POS-%')
+                                ->latest()
+                                ->limit(20)
+                                ->get();
+
+        return view('admin.pos.index', compact('menus', 'recentPosOrders'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'cart' => 'required|array|min:1',
+            'customer_name'  => 'required|string|max:255',
+            'payment_method' => 'required|string',
+            'items'          => 'required|array|min:1',
+            'items.*.menu_id' => 'required|exists:menus,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.ice_level' => 'nullable|string',
+            'items.*.sugar_level' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
         try {
             $totalAmount = 0;
             $totalCogs = 0;
+            $itemsToCreate = [];
 
-            // Bikin Order Baru untuk Kasir (Offline Transaction)
-            $order = Order::create([
-                'invoice_number' => 'INV-POS-' . time(),
-                'customer_name' => $request->customer_name,
-                'customer_phone' => $request->customer_phone ?? '-',
-                'order_type' => 'dine_in',
-                'payment_method' => $request->payment_method ?? 'cash',
-                'status' => 'completed',
-                'total_amount' => 0,
-                'total_cogs' => 0,
-                'gross_profit' => 0,
-            ]);
+            foreach ($request->items as $itemData) {
+                $menu = Menu::with('materials')->findOrFail($itemData['menu_id']);
+                $subtotal = $menu->selling_price * $itemData['quantity'];
+                $totalAmount += $subtotal;
 
-            foreach ($request->cart as $menuId => $item) {
-                $quantity = $item['quantity'];
-                // Ubah 'recipes.material' jadi 'materials'
-                $menu = Menu::with('materials')->findOrFail($menuId);
-
-                $itemCogs = $menu->calculated_hpp;
-                $totalAmount += $menu->selling_price * $quantity;
-                $totalCogs += $itemCogs * $quantity;
-
-                // 1. Simpan Item Pesanan
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'menu_id' => $menu->id,
-                    'quantity' => $quantity,
-                    'price_at_purchase' => $menu->selling_price,
-                    'cogs_at_purchase' => $itemCogs,
-                ]);
-
-                // 2. OTOMATIS POTONG STOK BAHAN BAKU (Inventory Deduct via Pivot)
+                $unitCogs = 0;
                 foreach ($menu->materials as $material) {
-                    $pivotQty = $material->pivot->quantity_required ?? 0;
-                    $deductAmount = $pivotQty * $quantity;
+                    $qtyRequired = $material->pivot->quantity_required;
+                    $costPerUnit = $material->unit_cost ?? 0;
+                    $unitCogs += ($qtyRequired * $costPerUnit);
 
-                    if ($material->stock_quantity < $deductAmount) {
-                        throw new \Exception("Stok bahan {$material->name} tidak cukup!");
-                    }
-
-                    $material->decrement('stock_quantity', $deductAmount);
+                    // Potong Stok
+                    $totalRequired = $qtyRequired * $itemData['quantity'];
+                    $material->decrement('stock_quantity', $totalRequired);
                 }
+
+                $itemCogsTotal = $unitCogs * $itemData['quantity'];
+                $totalCogs += $itemCogsTotal;
+
+                $itemsToCreate[] = [
+                    'menu_id'           => $menu->id,
+                    'quantity'          => $itemData['quantity'],
+                    'price_at_purchase' => $menu->selling_price,
+                    'unit_price'        => $menu->selling_price,
+                    'cogs_at_purchase'  => $unitCogs,
+                    'subtotal'          => $subtotal,
+                    'ice_level'         => $itemData['ice_level'] ?? 'Normal Ice',
+                    'sugar_level'       => $itemData['sugar_level'] ?? 'Normal Sugar',
+                ];
             }
 
-            // Update Total Order & Laba
-            $order->update([
-                'total_amount' => $totalAmount,
-                'total_cogs' => $totalCogs,
-                'gross_profit' => $totalAmount - $totalCogs,
+            $grossProfit = $totalAmount - $totalCogs;
+            $invoiceNumber = 'NOTTE-POS-' . date('YmdHis') . '-' . rand(100, 999);
+
+            $order = Order::create([
+                'invoice_number' => $invoiceNumber,
+                'customer_name'  => $request->customer_name,
+                'total_amount'   => $totalAmount,
+                'total_cogs'     => $totalCogs,
+                'gross_profit'   => $grossProfit,
+                'status'         => 'completed', // Fix kolom status utama
+                'payment_status' => 'paid',
+                'order_status'   => 'completed', // Jaga-jaga kalau ini masih ada di DB lu
+                'payment_method' => $request->payment_method,
+                'source'         => 'pos',
             ]);
 
+            foreach ($itemsToCreate as $item) {
+                OrderItem::create([
+                    'order_id'          => $order->id,
+                    'menu_id'           => $item['menu_id'],
+                    'quantity'          => $item['quantity'],
+                    'price_at_purchase' => $item['price_at_purchase'],
+                    'unit_price'        => $item['unit_price'],
+                    'cogs_at_purchase'  => $item['cogs_at_purchase'],
+                    'subtotal'          => $item['subtotal'],
+                    'ice_level'         => $item['ice_level'],
+                    'sugar_level'       => $item['sugar_level'],
+                ]);
+            }
+
+            try {
+                if (class_exists(CashFlow::class)) {
+                    CashFlow::create([
+                        'type'             => 'inflow',
+                        'category'         => 'POS Sales',
+                        'amount'           => $totalAmount,
+                        'description'      => 'Transaksi POS Kasir: ' . $invoiceNumber,
+                        'transaction_date' => now(),
+                    ]);
+                }
+            } catch (\Exception $ex) {
+                // Ignore safe catch
+            }
+
             DB::commit();
-            return redirect()->route('pos.index')->with('success', 'Transaksi Kasir Berhasil! Stok bahan baku telah terpotong otomatis.');
+
+            return response()->json([
+                'success'        => true,
+                'message'        => 'Transaksi berhasil disimpan & selesai!',
+                'invoice_number' => $invoiceNumber
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memproses transaksi: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

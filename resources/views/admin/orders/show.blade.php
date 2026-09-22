@@ -3,8 +3,17 @@
 @section('content')
 <div class="mb-6 flex justify-between items-center">
     <div>
-        <a href="{{ route('orders.index') }}" class="text-xs font-semibold text-gray-500 hover:text-gray-700">← Kembali ke Pesanan</a>
-        <h2 class="text-2xl font-bold text-gray-800 mt-1">Detail Pesanan: {{ $order->invoice_number }}</h2>
+        <!-- Tombol Kembali Dinamis Sesuai Asal Transaksi -->
+        @if(str_contains($order->invoice_number, 'NOTTE-POS-'))
+            <a href="{{ route('pos.index') }}" class="text-xs font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1 mb-1">
+                ← Kembali ke POS Kasir
+            </a>
+        @else
+            <a href="{{ route('orders.index') }}" class="text-xs font-semibold text-gray-500 hover:text-gray-700 block mb-1">
+                ← Kembali ke Pesanan Online
+            </a>
+        @endif
+        <h2 class="text-2xl font-bold text-gray-800">Detail Pesanan: {{ $order->invoice_number }}</h2>
     </div>
 
     <!-- Form Update Status -->
@@ -37,12 +46,14 @@
             @foreach($order->orderItems as $item)
             <div class="flex justify-between items-center border-b pb-3">
                 <div>
-                    <h4 class="font-bold text-gray-900">{{ $item->menu->name }}</h4>
-                    <p class="text-xs font-semibold text-amber-700">Variasi: {{ $item->note ?? 'Normal' }}</p>
-                    <p class="text-xs text-gray-500">Rp{{ number_format($item->price_at_purchase, 0, ',', '.') }} x {{ $item->quantity }}</p>
+                    <h4 class="font-bold text-gray-900">{{ $item->menu->name ?? 'Menu Dihapus' }}</h4>
+                    <p class="text-xs font-semibold text-amber-700">
+                        Ice: {{ $item->ice_level ?? 'Normal' }} | Sugar: {{ $item->sugar_level ?? 'Normal' }}
+                    </p>
+                    <p class="text-xs text-gray-500">Rp{{ number_format($item->price_at_purchase ?? $item->unit_price, 0, ',', '.') }} x {{ $item->quantity }}</p>
                 </div>
                 <p class="font-extrabold text-gray-800">
-                    Rp{{ number_format($item->price_at_purchase * $item->quantity, 0, ',', '.') }}
+                    Rp{{ number_format(($item->price_at_purchase ?? $item->unit_price) * $item->quantity, 0, ',', '.') }}
                 </p>
             </div>
             @endforeach
@@ -56,24 +67,24 @@
 
     <!-- Info Pembeli & Pengiriman -->
     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-4 h-fit">
-        <h3 class="font-bold text-gray-800 pb-2 border-b">Informasi Pengiriman</h3>
+        <h3 class="font-bold text-gray-800 pb-2 border-b">Informasi Transaksi</h3>
         <div>
             <span class="text-xs text-gray-400 block">Nama Pelanggan:</span>
             <p class="font-semibold text-gray-800">{{ $order->customer_name }}</p>
         </div>
         <div>
             <span class="text-xs text-gray-400 block">Nomor HP / WhatsApp:</span>
-            <p class="font-semibold text-gray-800">{{ $order->customer_phone }}</p>
+            <p class="font-semibold text-gray-800">{{ $order->customer_phone ?? '-' }}</p>
         </div>
         <div>
             <span class="text-xs text-gray-400 block">Tipe Pesanan:</span>
             <span class="uppercase font-bold text-xs bg-slate-100 text-slate-800 px-2 py-0.5 rounded">
-                {{ $order->order_type }}
+                {{ str_contains($order->invoice_number, 'NOTTE-POS-') ? 'POS Offline' : ($order->order_type ?? 'Online') }}
             </span>
         </div>
         <div>
             <span class="text-xs text-gray-400 block">Alamat Pengiriman:</span>
-            <p class="text-sm text-gray-700">{{ $order->shipping_address ?? 'Pickup di Toko / Tanpa Alamat' }}</p>
+            <p class="text-sm text-gray-700">{{ $order->shipping_address ?? 'Pickup / Transaksi Kasir Toko' }}</p>
         </div>
         <hr>
         <div>

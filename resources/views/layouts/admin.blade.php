@@ -13,11 +13,12 @@
             <div>
                 <h1 class="text-2xl font-bold tracking-wider text-amber-500 mb-8">NOTTE ERP</h1>
                 <nav class="space-y-2">
-                    <a href="{{ route('admin.dashboard') }}" class="block py-2.5 px-4 rounded transition hover:bg-slate-800">Dashboard</a>
-                    <a href="{{ route('pos.index') }}" class="block py-2.5 px-4 rounded transition hover:bg-slate-800">POS Kasir Toko</a>
-                    <a href="{{ route('orders.index') }}" class="block py-2.5 px-4 rounded transition hover:bg-slate-800">Pesanan Online</a>
-                    <a href="{{ route('materials.index') }}" class="block py-2.5 px-4 rounded transition hover:bg-slate-800">Stok Bahan Baku</a>
-                    <a href="{{ route('menus.index') }}" class="block py-2.5 px-4 rounded transition hover:bg-slate-800">Katalog Menu & HPP</a>
+                    <a href="{{ route('admin.dashboard') }}" class="block py-2.5 px-4 rounded transition {{ request()->routeIs('admin.dashboard') ? 'bg-slate-800 text-amber-400 font-bold' : 'hover:bg-slate-800' }}">Dashboard</a>
+                    <a href="{{ route('pos.index') }}" class="block py-2.5 px-4 rounded transition {{ request()->routeIs('pos.*') ? 'bg-slate-800 text-amber-400 font-bold' : 'hover:bg-slate-800' }}">POS Kasir Toko</a>
+                    <a href="{{ route('orders.index') }}" class="block py-2.5 px-4 rounded transition {{ request()->routeIs('orders.*') ? 'bg-slate-800 text-amber-400 font-bold' : 'hover:bg-slate-800' }}">Pesanan Online</a>
+                    <a href="{{ route('cash_flows.index') }}" class="block py-2.5 px-4 rounded transition {{ request()->routeIs('cash_flows.*') ? 'bg-slate-800 text-amber-400 font-bold' : 'hover:bg-slate-800' }}">Laporan Keuangan</a>
+                    <a href="{{ route('materials.index') }}" class="block py-2.5 px-4 rounded transition {{ request()->routeIs('materials.*') ? 'bg-slate-800 text-amber-400 font-bold' : 'hover:bg-slate-800' }}">Stok Bahan Baku</a>
+                    <a href="{{ route('menus.index') }}" class="block py-2.5 px-4 rounded transition {{ request()->routeIs('menus.*') ? 'bg-slate-800 text-amber-400 font-bold' : 'hover:bg-slate-800' }}">Katalog Menu & HPP</a>
                 </nav>
             </div>
             <div class="border-t border-slate-800 pt-4">

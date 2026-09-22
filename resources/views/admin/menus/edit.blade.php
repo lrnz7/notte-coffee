@@ -3,9 +3,21 @@
 @section('content')
 <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-sm border border-gray-200">
     <h2 class="text-2xl font-bold text-gray-800 mb-1">Edit Menu & Komposisi Resep</h2>
-    <p class="text-gray-600 text-sm mb-6">Ubah informasi produk jual dan sesuaikan takaran bahan bakunya.</p>
+    <p class="text-gray-600 text-sm mb-6">Ubah informasi produk jual, foto produk, dan sesuaikan takaran bahan bakunya.</p>
 
-    <form action="{{ route('menus.update', $menu->id) }}" method="POST">
+    <!-- Error Validation Alert -->
+    @if ($errors->any())
+        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded">
+            <p class="text-sm font-bold text-red-800 mb-1">Gagal Menyimpan Perubahan:</p>
+            <ul class="list-disc list-inside text-xs text-red-700">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form action="{{ route('menus.update', $menu->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
@@ -27,6 +39,17 @@
             </div>
 
             <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Foto Produk</label>
+                <div class="flex items-center space-x-4">
+                    @if($menu->image)
+                        <img src="{{ $menu->image }}" alt="{{ $menu->name }}" class="w-16 h-16 object-cover rounded border border-gray-200">
+                    @endif
+                    <input type="file" name="image" accept="image/*" class="w-full border border-gray-300 p-2 rounded text-sm file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
+                </div>
+                <p class="text-[11px] text-gray-500 mt-1">Format: JPG, PNG, WEBP (Maksimal 2MB). Biarkan kosong jika tidak ingin mengubah foto.</p>
+            </div>
+
+            <div>
                 <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Deskripsi Singkat</label>
                 <textarea name="description" rows="2" class="w-full border border-gray-300 p-2.5 rounded text-sm">{{ old('description', $menu->description) }}</textarea>
             </div>
@@ -37,12 +60,12 @@
         <div class="mb-6">
             <h3 class="text-sm font-bold text-gray-800 uppercase mb-3">Komposisi Bahan Baku (BOM)</h3>
             <div id="materials-container" class="space-y-3">
-                @foreach($menu->materials as $menuMaterial)
+                @forelse($menu->materials as $menuMaterial)
                 <div class="flex items-center space-x-3 material-row">
                     <select name="materials[]" required class="flex-1 border border-gray-300 p-2 rounded text-sm">
                         <option value="">-- Pilih Bahan Baku --</option>
                         @foreach($materials as $mat)
-                            <option value="{{ $mat->id }}" {{ $mat->id ==$menuMaterial->id ? 'selected' : '' }}>
+                            <option value="{{ $mat->id }}" {{ (int)$mat->id === (int)$menuMaterial->id ? 'selected' : '' }}>
                                 {{ $mat->name }} (Stok: {{ $mat->stock_quantity }} {{$mat->unit }})
                             </option>
                         @endforeach
@@ -50,7 +73,18 @@
                     <input type="number" step="0.01" name="amounts[]" value="{{ $menuMaterial->pivot->quantity_required }}" placeholder="Jumlah" required class="w-32 border border-gray-300 p-2 rounded text-sm">
                     <button type="button" onclick="removeRow(this)" class="bg-red-100 text-red-600 px-3 py-2 rounded text-xs font-bold hover:bg-red-200">Hapus</button>
                 </div>
-                @endforeach
+                @empty
+                <div class="flex items-center space-x-3 material-row">
+                    <select name="materials[]" required class="flex-1 border border-gray-300 p-2 rounded text-sm">
+                        <option value="">-- Pilih Bahan Baku --</option>
+                        @foreach($materials as $mat)
+                            <option value="{{ $mat->id }}">{{ $mat->name }} (Stok: {{ $mat->stock_quantity }} {{$mat->unit }})</option>
+                        @endforeach
+                    </select>
+                    <input type="number" step="0.01" name="amounts[]" placeholder="Jumlah" required class="w-32 border border-gray-300 p-2 rounded text-sm">
+                    <button type="button" onclick="removeRow(this)" class="bg-red-100 text-red-600 px-3 py-2 rounded text-xs font-bold hover:bg-red-200">Hapus</button>
+                </div>
+                @endforelse
             </div>
 
             <button type="button" onclick="addMaterialRow()" class="mt-4 bg-gray-100 text-gray-700 hover:bg-gray-200 text-xs font-bold px-4 py-2 rounded">

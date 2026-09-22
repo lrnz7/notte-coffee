@@ -12,7 +12,10 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Order::with('orderItems.menu')->where('order_type', '!=', 'dine_in')->latest();
+        // Filter: Cuma tarik pesanan yang nomor invoice-nya BUKAN dari POS Kasir (Online Only)
+        $query = Order::with('orderItems.menu')
+                      ->where('invoice_number', 'not like', 'NOTTE-POS-%')
+                      ->latest();
 
         // Filter berdasarkan status jika ada
         if ($request->has('status') && $request->status != '') {
@@ -25,12 +28,10 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        // Ubah 'recipes.material' menjadi 'materials' sesuai relasi database
         $order->load('orderItems.menu.materials');
         return view('admin.orders.show', compact('order'));
     }
 
-    // Proses pesanan online (Ubah status & Potong Stok jika status baru 'processing')
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
@@ -42,13 +43,12 @@ class OrderController extends Controller
 
         DB::beginTransaction();
         try {
-            // Jika status berubah dari pending/paid ke processing/completed, POTONG STOK BAHAN BAKU
+            // Potong stok HANYA jika dari pending/paid ke processing/completed
             if (in_array($oldStatus, ['pending', 'paid']) && in_array($newStatus, ['processing', 'completed'])) {
                 foreach ($order->orderItems as $item) {
                     $menu = $item->menu->load('materials');
                     
                     foreach ($menu->materials as $material) {
-                        // Ambil jumlah kebutuhan dari tabel pivot (quantity_required)
                         $pivotQty = $material->pivot->quantity_required ?? 0;
                         $deductAmount = $pivotQty * $item->quantity;
 
