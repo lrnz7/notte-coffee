@@ -27,6 +27,7 @@ Route::get('/menu', [CustomerController::class, 'menu'])->name('customer.menu');
 // 2. Checkout & Order Tracking
 Route::post('/checkout', [CustomerController::class, 'checkout'])->name('customer.checkout');
 Route::get('/order/{invoice}', [CustomerController::class, 'trackOrder'])->name('customer.order.track');
+Route::post('/order/{invoice}/upload-proof', [CustomerController::class, 'uploadProof'])->name('customer.order.uploadProof'); // Rute Upload Bukti Bayar
 
 // 3. Halaman Pendukung Wajib
 Route::get('/about', [PageController::class, 'about'])->name('pages.about');

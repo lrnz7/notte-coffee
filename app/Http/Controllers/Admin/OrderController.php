@@ -12,12 +12,10 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        // Filter: Cuma tarik pesanan yang nomor invoice-nya BUKAN dari POS Kasir (Online Only)
         $query = Order::with('orderItems.menu')
                       ->where('invoice_number', 'not like', 'NOTTE-POS-%')
                       ->latest();
 
-        // Filter berdasarkan status jika ada
         if ($request->has('status') && $request->status != '') {
             $query->where('status', $request->status);
         }
@@ -35,7 +33,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|in:pending,paid,processing,completed,cancelled',
+            'status' => 'required|in:pending,pending_payment,waiting_verification,processing,completed,cancelled',
         ]);
 
         $oldStatus = $order->status;
@@ -43,8 +41,8 @@ class OrderController extends Controller
 
         DB::beginTransaction();
         try {
-            // Potong stok HANYA jika dari pending/paid ke processing/completed
-            if (in_array($oldStatus, ['pending', 'paid']) && in_array($newStatus, ['processing', 'completed'])) {
+            // Potong stok jika berubah dari status pending/pembayaran ke status diproses/selesai
+            if (in_array($oldStatus, ['pending', 'pending_payment', 'waiting_verification']) && in_array($newStatus, ['processing', 'completed'])) {
                 foreach ($order->orderItems as $item) {
                     $menu = $item->menu->load('materials');
                     
@@ -64,7 +62,7 @@ class OrderController extends Controller
             $order->update(['status' => $newStatus]);
             DB::commit();
 
-            return redirect()->back()->with('success', "Status pesanan {$order->invoice_number} berhasil diperbarui menjadi " . strtoupper($newStatus));
+            return redirect()->back()->with('success', "Status pesanan {$order->invoice_number} berhasil diperbarui menjadi " . strtoupper(str_replace('_', ' ', $newStatus)));
 
         } catch (\Exception $e) {
             DB::rollBack();

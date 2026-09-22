@@ -19,7 +19,7 @@ class CustomerController extends Controller
     public function menu()
     {
         $menus = Menu::where('is_active', true)->get();
-        return view('customer.store', compact('menus'));
+        return view('customer.menu', compact('menus'));
     }
 
     public function checkout(Request $request)
@@ -44,7 +44,7 @@ class CustomerController extends Controller
                 'shipping_address' => $request->shipping_address,
                 'order_type' => $request->order_type,
                 'payment_method' => $request->payment_method ?? 'qris',
-                'status' => 'pending',
+                'status' => 'pending_payment',
                 'total_amount' => 0,
                 'total_cogs' => 0,
                 'gross_profit' => 0,
@@ -73,8 +73,12 @@ class CustomerController extends Controller
             ]);
 
             DB::commit();
+
+            // Simpan nomor invoice aktif ke session buat Floating Tracker Bar di customer menu
+            session(['active_invoice' => $order->invoice_number]);
+
             return redirect()->route('customer.order.track', $order->invoice_number)
-                ->with('success', 'Pesanan berhasil dibuat!');
+                ->with('success', 'Pesanan berhasil dibuat! Silakan lakukan pembayaran.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -86,5 +90,41 @@ class CustomerController extends Controller
     {
         $order = Order::with('orderItems.menu')->where('invoice_number', $invoice)->firstOrFail();
         return view('customer.track', compact('order'));
+    }
+
+    public function uploadProof(Request $request, $invoice)
+    {
+        $request->validate([
+            'payment_proof' => 'required|image|mimes:jpeg,png,jpg|max:5120', // Kapasitas 5MB
+        ]);
+
+        try {
+            $order = Order::where('invoice_number', $invoice)->firstOrFail();
+
+            if ($request->hasFile('payment_proof')) {
+                $file = $request->file('payment_proof');
+                $filename = 'proof_' . time() . '.' . $file->getClientOriginalExtension();
+                
+                // FUNGSI KRUSIAL: Bikin folder otomatis kalau belum ada
+                $destinationPath = public_path('uploads/payment_proofs');
+                if (!file_exists($destinationPath)) {
+                    mkdir($destinationPath, 0755, true);
+                }
+
+                $file->move($destinationPath, $filename);
+
+                $order->update([
+                    'payment_proof' => $filename,
+                    'status' => 'waiting_verification',
+                ]);
+
+                return back()->with('success', 'Bukti pembayaran berhasil dikirim! Kasir sedang memverifikasi pesanan Anda.');
+            }
+
+            return back()->with('error', 'Gagal: File foto tidak terdeteksi oleh sistem.');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+        }
     }
 }

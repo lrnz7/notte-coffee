@@ -37,3 +37,20 @@ All notable changes to this project will be documented in this file.
 - Perbaikan highlight menu aktif di sidebar admin menggunakan helper `request()->routeIs()`.
 - Fix error namespace, inheritance `Controller`, dan perbedaan kapitalisasi model pada `CashFlowController`.
 - Fix *SQLSTATE data truncation* pada kolom `type` tabel `cash_flows` dengan mapping otomatis dari form ke format database (`income`/`expense`).
+
+
+## [0.0.3] - 2026-09-22
+
+### Added
+- Sistem pembayaran dan verifikasi QRIS online dengan status transaksi baru (`pending_payment` dan `waiting_verification`) untuk memastikan setiap pesanan online melalui validasi pembayaran.
+- Fitur *custom dropzone upload* bukti transfer (*screenshot* QRIS/struk) berformat JPG/PNG hingga 5MB di halaman struk/invoice pembeli.
+- Logika pembuatan direktori otomatis (`public/uploads/payment_proofs`) di *backend* secara dinamis untuk mencegah *silent failure* saat berkas diunggah.
+- Tata letak **Grid 2 Kolom** berukuran penuh yang selaras dengan estetika *Dark Luxury* pada halaman *tracking* pesanan (*invoice*).
+- Fitur **Sticky Live Tracker Bar** interaktif di bagian bawah layar katalog menu yang mendeteksi pesanan aktif pembeli secara otomatis via *session*.
+- Sistem asinkronus (*polling*) setiap 5 detik untuk memperbarui status pesanan secara *real-time* tanpa memuat ulang halaman (*refresh*).
+- Indikator visual *Emerald Glow* (pesanan selesai) dan *Rose Glow* (pesanan dibatalkan), lengkap dengan instruksi *copywriting* yang jelas serta tombol penutup manual (`✕`).
+- Pratinjau gambar bukti transfer pembeli di halaman detail pesanan admin, lengkap dengan tombol aksi cepat untuk memproses pesanan (sekaligus memotong stok bahan baku otomatis) atau membatalkannya.
+
+### Changed
+- Penyelarasan *controller* dan tampilan daftar pesanan online di panel admin agar sepenuhnya mendukung status *pending_payment* dan *waiting_verification*.
+- Konfigurasi zona waktu aplikasi diubah dari UTC ke `Asia/Jakarta` (WIB) pada `config/app.php` untuk akurasi pencatatan waktu transaksi.
