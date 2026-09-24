@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -26,7 +25,8 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load('orderItems.menu.materials');
+        // Load relasi yang benar sesuai ERP
+        $order->load('orderItems.menu.recipes.ingredient');
         return view('admin.orders.show', compact('order'));
     }
 
@@ -41,20 +41,38 @@ class OrderController extends Controller
 
         DB::beginTransaction();
         try {
-            // Potong stok jika berubah dari status pending/pembayaran ke status diproses/selesai
+            // LOGIKA 1: Potong stok jika berubah dari status awal ke status diproses/selesai
             if (in_array($oldStatus, ['pending', 'pending_payment', 'waiting_verification']) && in_array($newStatus, ['processing', 'completed'])) {
                 foreach ($order->orderItems as $item) {
-                    $menu = $item->menu->load('materials');
+                    $menu = $item->menu->load('recipes.ingredient');
                     
-                    foreach ($menu->materials as $material) {
-                        $pivotQty = $material->pivot->quantity_required ?? 0;
-                        $deductAmount = $pivotQty * $item->quantity;
+                    foreach ($menu->recipes as $recipe) {
+                        $ingredient = $recipe->ingredient;
+                        if (!$ingredient) continue;
 
-                        if ($material->stock_quantity < $deductAmount) {
-                            throw new \Exception("Gagal memproses! Stok bahan {$material->name} tidak cukup.");
+                        $qtyRequired = $recipe->quantity;
+                        $deductAmount = $qtyRequired * $item->quantity;
+
+                        if ($ingredient->stock < $deductAmount) {
+                            throw new \Exception("Gagal memproses! Stok bahan {$ingredient->name} tidak cukup.");
                         }
 
-                        $material->decrement('stock_quantity', $deductAmount);
+                        $ingredient->decrement('stock', $deductAmount);
+                    }
+                }
+            }
+
+            // LOGIKA 2: Restock otomatis jika pesanan yang sudah diproses tiba-tiba dibatalkan
+            if (in_array($oldStatus, ['processing', 'completed']) && $newStatus === 'cancelled') {
+                foreach ($order->orderItems as $item) {
+                    $menu = $item->menu->load('recipes.ingredient');
+                    
+                    foreach ($menu->recipes as $recipe) {
+                        $ingredient = $recipe->ingredient;
+                        if ($ingredient) {
+                            $restockAmount = $recipe->quantity * $item->quantity;
+                            $ingredient->increment('stock', $restockAmount);
+                        }
                     }
                 }
             }

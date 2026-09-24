@@ -9,15 +9,25 @@ class Recipe extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['menu_id', 'material_id', 'amount_needed'];
+    protected $fillable = [
+        'menu_id',
+        'ingredient_id',
+        'quantity',
+    ];
+
+    // ALIAS SUPAYA VIEW ADMIN TIDAK ERROR KETIKA MEMANGGIL quantity_required
+    public function getQuantityRequiredAttribute()
+    {
+        return $this->quantity;
+    }
 
     public function menu()
     {
         return $this->belongsTo(Menu::class);
     }
 
-    public function material()
+    public function ingredient()
     {
-        return $this->belongsTo(Material::class);
+        return $this->belongsTo(Ingredient::class);
     }
 }

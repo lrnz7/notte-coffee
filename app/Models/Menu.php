@@ -9,21 +9,38 @@ class Menu extends Model
 {
     use HasFactory;
 
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'name',
+        'category',
+        'description',
+        'selling_price',
+        'image',
+        'is_active',
+    ];
 
-    // Accessor untuk hitung HPP dinamis disesuaikan dengan kolom unit_price database
-    public function getCalculatedHppAttribute()
+    // Relasi ke Resep
+    public function recipes()
     {
-        return $this->materials->sum(function ($material) {
-            $qty = $material->pivot->quantity_required ?? 0;
-            $price = $material->unit_price ?? 0; // Menyesuaikan dengan kolom unit_price di tabel materials
-            return $qty * $price;
-        });
+        return $this->hasMany(Recipe::class);
     }
 
+    // ALIAS SUPAYA CONTROLLER ADMIN GAK ERROR (materials)
     public function materials()
     {
-        return $this->belongsToMany(Material::class, 'menu_materials')
-                    ->withPivot('quantity_required');
+        return $this->hasMany(Recipe::class);
+    }
+
+    // OTOMATIS HITUNG HPP BERDASARKAN BAHAN BAKU & STOK
+    public function getCalculatedHppAttribute()
+    {
+        $totalHpp = 0;
+        foreach ($this->recipes as $recipe) {
+            if ($recipe->ingredient) {
+                $totalHpp += ($recipe->quantity * $recipe->ingredient->cost_per_unit);
+            }
+        }
+        
+        // Jika belum ada resep, gunakan estimasi aman 40% dari harga jual
+        return $totalHpp > 0 ? $totalHpp : ($this->selling_price * 0.4);
     }
 }

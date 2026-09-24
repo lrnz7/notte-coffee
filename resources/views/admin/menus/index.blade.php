@@ -32,14 +32,16 @@
             <div class="bg-gray-50 p-3 rounded-md border border-gray-100 mb-4">
                 <p class="text-xs font-bold text-gray-600 uppercase mb-2">Komposisi Resep (BOM):</p>
                 <ul class="space-y-1 text-xs text-gray-700">
-                    @foreach($menu->materials as $material)
+                    @forelse($menu->recipes as $recipe)
                     <li class="flex justify-between border-b border-gray-200 py-1">
-                        <span>• {{ $material->name }} ({{ $material->pivot->quantity_required }} {{ $material->unit }})</span>
+                        <span>• {{ $recipe->ingredient->name ?? 'Bahan Tidak Ditemukan' }} ({{ $recipe->quantity }} {{ $recipe->ingredient->unit ?? 'unit' }})</span>
                         <span class="font-medium text-gray-500">
-                            Rp{{ number_format($material->pivot->quantity_required * $material->unit_price, 0, ',', '.') }}
+                            Rp{{ number_format($recipe->quantity * ($recipe->ingredient->cost_per_unit ?? 0), 0, ',', '.') }}
                         </span>
                     </li>
-                    @endforeach
+                    @empty
+                    <li class="text-gray-400 italic py-1">Belum ada resep bahan baku.</li>
+                    @endforelse
                 </ul>
             </div>
         </div>

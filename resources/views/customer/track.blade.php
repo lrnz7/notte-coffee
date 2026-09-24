@@ -15,17 +15,13 @@
 </head>
 <body class="bg-[#080808] text-gray-200 antialiased min-h-screen flex flex-col justify-between p-4 md:p-10 relative">
 
-    <!-- HIDDEN DATA UNTUK DIBACA LIVE TRACKER JS -->
+    <!-- DATA STATUS UNTUK LIVE POLLING JS -->
     <div id="order-status-data" data-status="{{ $order->status }}" class="hidden"></div>
 
     <div class="max-w-5xl mx-auto w-full my-auto bg-[#121212] border border-neutral-800/80 rounded-3xl shadow-2xl relative overflow-hidden">
-        
-        <!-- Subtle Glow Filter -->
-        <div class="absolute -top-32 -right-32 w-96 h-96 bg-[#c5a880]/10 rounded-full blur-[100px] pointer-events-none"></div>
-
         <div class="grid grid-cols-1 lg:grid-cols-12">
             
-            <!-- KOLOM KIRI: INFO PESANAN & ITEM -->
+            <!-- KOLOM KIRI: BREAKDOWN PESANAN -->
             <div class="lg:col-span-7 p-8 md:p-12 border-b lg:border-b-0 lg:border-r border-neutral-800/80 flex flex-col">
                 <div class="pb-8 border-b border-neutral-800/80 mb-8 space-y-2">
                     <span class="text-[10px] font-mono uppercase tracking-[0.3em] text-[#c5a880] block">Official Digital Receipt</span>
@@ -38,7 +34,7 @@
                     @foreach($order->orderItems as $item)
                     <div class="flex justify-between items-start text-sm">
                         <div>
-                            <span class="text-gray-200 font-medium block text-base">{{ $item->menu->name }}</span>
+                            <span class="text-gray-200 font-medium block text-base">{{ $item->menu->name ?? 'Menu Terhapus' }}</span>
                             <span class="text-[11px] text-gray-500 font-mono">Note: {{ $item->note }}</span>
                         </div>
                         <div class="text-right font-mono">
@@ -47,6 +43,13 @@
                         </div>
                     </div>
                     @endforeach
+
+                    @if($order->discount_amount > 0)
+                    <div class="flex justify-between items-center text-xs pt-4 border-t border-neutral-800/60 text-emerald-400 font-mono">
+                        <span>Diskon 50% Pengguna Baru</span>
+                        <span>-Rp{{ number_format($order->discount_amount, 0, ',', '.') }}</span>
+                    </div>
+                    @endif
                 </div>
 
                 <div class="pt-6 border-t border-neutral-800/80 flex justify-between items-end">
@@ -55,7 +58,7 @@
                 </div>
             </div>
 
-            <!-- KOLOM KANAN: QRIS & UPLOAD AREA -->
+            <!-- KOLOM KANAN: QRIS & UPLOAD BUKTI -->
             <div class="lg:col-span-5 p-8 md:p-12 bg-[#0a0a0a] flex flex-col justify-center">
                 
                 @if(session('error'))
@@ -78,7 +81,7 @@
                     </span>
                 </div>
 
-                <!-- JIKA BELUM BAYAR -->
+                <!-- JIKA BELUM BAYAR: TAMPILKAN QRIS & FORM UPLOAD -->
                 @if($order->status == 'pending_payment')
                 <div class="space-y-6">
                     <div class="text-center">
@@ -92,7 +95,7 @@
                         @csrf
                         <label for="payment_proof" class="flex flex-col items-center justify-center w-full h-32 border border-dashed border-neutral-700 hover:border-[#c5a880] bg-[#121212] rounded-xl cursor-pointer transition p-4 text-center group">
                             <svg class="w-6 h-6 text-gray-500 group-hover:text-[#c5a880] mb-2 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            <span id="file-label-text" class="text-xs text-gray-400 group-hover:text-[#c5a880] transition">Klik untuk unggah foto struk / screenshot QRIS</span>
+                            <span id="file-label-text" class="text-xs text-gray-400 group-hover:text-[#c5a880] transition">Klik untuk unggah bukti bayar</span>
                             <span class="text-[10px] text-gray-600 mt-1">Format: JPG, PNG (Maks 5MB)</span>
                             <input type="file" id="payment_proof" name="payment_proof" accept="image/*" required class="hidden" onchange="previewFileName(this)">
                         </label>
@@ -104,7 +107,7 @@
                 </div>
                 @endif
 
-                <!-- JIKA SUDAH UPLOAD / SELESAI -->
+                <!-- JIKA SUDAH BAYAR / DI-VERIFIKASI -->
                 @if($order->status != 'pending_payment')
                 <div class="p-6 bg-[#121212] border border-neutral-800 rounded-xl text-center space-y-4">
                     @if($order->payment_proof)
@@ -116,9 +119,9 @@
                     @if($order->status == 'waiting_verification')
                         <p class="text-xs text-gray-400 font-light leading-relaxed">Kasir sedang mengonfirmasi pesanan kamu.<br>Halaman ini akan otomatis diperbarui.</p>
                     @elseif($order->status == 'processing')
-                        <p class="text-xs text-notte-gold font-bold leading-relaxed">Pesanan kamu sedang diracik oleh Barista kami. Mohon ditunggu!</p>
+                        <p class="text-xs text-[#c5a880] font-bold leading-relaxed">Pesanan kamu sedang diracik oleh Barista kami. Mohon ditunggu!</p>
                     @elseif($order->status == 'completed')
-                        <p class="text-sm text-emerald-400 font-bold leading-relaxed">Pesanan Selesai!<br><span class="text-xs text-gray-400 font-normal">Kami akan menghubungi kamu melalui WhatsApp.</span></p>
+                        <p class="text-sm text-emerald-400 font-bold leading-relaxed">Pesanan Selesai!<br><span class="text-xs text-gray-400 font-normal">Silakan ambil pesanan lu di counter.</span></p>
                     @endif
                 </div>
                 @endif
@@ -132,6 +135,9 @@
     </div>
 
     <script>
+        // Paksa bersihkan item tracker yang ter-close sebelumnya untuk invoice aktif ini
+        localStorage.removeItem('closed_tracker_{{ $order->invoice_number }}');
+
         function previewFileName(input) {
             const label = document.getElementById('file-label-text');
             if (input.files && input.files[0]) {
@@ -140,7 +146,6 @@
             }
         }
         
-        // Auto refresh halaman invoice tiap 10 detik kalau masih nunggu verifikasi/diproses
         @if(in_array($order->status, ['waiting_verification', 'processing']))
         setTimeout(function(){
             window.location.reload(1);

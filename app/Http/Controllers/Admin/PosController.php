@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Menu;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Material;
 use App\Models\CashFlow;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,9 +14,9 @@ class PosController extends Controller
 {
     public function index()
     {
-        $menus = Menu::with('materials')->where('is_active', true)->get();
+        // Panggil relasi recipes dan ingredient
+        $menus = Menu::with('recipes.ingredient')->where('is_active', true)->get();
         
-        // Narik 20 riwayat transaksi POS terakhir buat ditampilin di panel kasir
         $recentPosOrders = Order::where('invoice_number', 'like', 'NOTTE-POS-%')
                                 ->latest()
                                 ->limit(20)
@@ -45,19 +44,22 @@ class PosController extends Controller
             $itemsToCreate = [];
 
             foreach ($request->items as $itemData) {
-                $menu = Menu::with('materials')->findOrFail($itemData['menu_id']);
+                $menu = Menu::with('recipes.ingredient')->findOrFail($itemData['menu_id']);
                 $subtotal = $menu->selling_price * $itemData['quantity'];
                 $totalAmount += $subtotal;
 
                 $unitCogs = 0;
-                foreach ($menu->materials as $material) {
-                    $qtyRequired = $material->pivot->quantity_required;
-                    $costPerUnit = $material->unit_cost ?? 0;
+                foreach ($menu->recipes as $recipe) {
+                    $ingredient = $recipe->ingredient;
+                    if (!$ingredient) continue;
+
+                    $qtyRequired = $recipe->quantity;
+                    $costPerUnit = $ingredient->cost_per_unit ?? 0;
                     $unitCogs += ($qtyRequired * $costPerUnit);
 
-                    // Potong Stok
+                    // Potong Stok Fisik di tabel ingredients
                     $totalRequired = $qtyRequired * $itemData['quantity'];
-                    $material->decrement('stock_quantity', $totalRequired);
+                    $ingredient->decrement('stock', $totalRequired);
                 }
 
                 $itemCogsTotal = $unitCogs * $itemData['quantity'];
@@ -84,9 +86,9 @@ class PosController extends Controller
                 'total_amount'   => $totalAmount,
                 'total_cogs'     => $totalCogs,
                 'gross_profit'   => $grossProfit,
-                'status'         => 'completed', // Fix kolom status utama
+                'status'         => 'completed', 
                 'payment_status' => 'paid',
-                'order_status'   => 'completed', // Jaga-jaga kalau ini masih ada di DB lu
+                'order_status'   => 'completed', 
                 'payment_method' => $request->payment_method,
                 'source'         => 'pos',
             ]);
