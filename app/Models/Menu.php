@@ -18,29 +18,31 @@ class Menu extends Model
         'is_active',
     ];
 
-    // Relasi ke Resep
+    // Relasi ke tabel recipes
     public function recipes()
     {
         return $this->hasMany(Recipe::class);
     }
 
-    // ALIAS SUPAYA CONTROLLER ADMIN GAK ERROR (materials)
+    // Pakai belongsToMany biar sinkron sama MenuController, HANYA panggil kolom 'quantity'
     public function materials()
     {
-        return $this->hasMany(Recipe::class);
+        return $this->belongsToMany(Material::class, 'recipes', 'menu_id', 'ingredient_id')
+                    ->withPivot('quantity');
     }
 
-    // OTOMATIS HITUNG HPP BERDASARKAN BAHAN BAKU & STOK
+    // OTOMATIS HITUNG HPP BERDASARKAN BAHAN BAKU (MATERIAL)
     public function getCalculatedHppAttribute()
     {
         $totalHpp = 0;
         foreach ($this->recipes as $recipe) {
-            if ($recipe->ingredient) {
-                $totalHpp += ($recipe->quantity * $recipe->ingredient->cost_per_unit);
+            if ($recipe->material) {
+                // Pakai unit_price dari tabel materials
+                $qty = $recipe->quantity ?? 0;
+                $totalHpp += ($qty * $recipe->material->unit_price);
             }
         }
         
-        // Jika belum ada resep, gunakan estimasi aman 40% dari harga jual
         return $totalHpp > 0 ? $totalHpp : ($this->selling_price * 0.4);
     }
 }

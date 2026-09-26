@@ -14,8 +14,8 @@ class PosController extends Controller
 {
     public function index()
     {
-        // Panggil relasi recipes dan ingredient
-        $menus = Menu::with('recipes.ingredient')->where('is_active', true)->get();
+        // PERBAIKAN: Load recipes.material
+        $menus = Menu::with('recipes.material')->where('is_active', true)->get();
         
         $recentPosOrders = Order::where('invoice_number', 'like', 'NOTTE-POS-%')
                                 ->latest()
@@ -30,6 +30,7 @@ class PosController extends Controller
         $request->validate([
             'customer_name'  => 'required|string|max:255',
             'payment_method' => 'required|string',
+            'order_source'   => 'nullable|string',
             'items'          => 'required|array|min:1',
             'items.*.menu_id' => 'required|exists:menus,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -44,22 +45,22 @@ class PosController extends Controller
             $itemsToCreate = [];
 
             foreach ($request->items as $itemData) {
-                $menu = Menu::with('recipes.ingredient')->findOrFail($itemData['menu_id']);
+                $menu = Menu::with('recipes.material')->findOrFail($itemData['menu_id']);
                 $subtotal = $menu->selling_price * $itemData['quantity'];
                 $totalAmount += $subtotal;
 
                 $unitCogs = 0;
                 foreach ($menu->recipes as $recipe) {
-                    $ingredient = $recipe->ingredient;
-                    if (!$ingredient) continue;
+                    $material = $recipe->material;
+                    if (!$material) continue;
 
-                    $qtyRequired = $recipe->quantity;
-                    $costPerUnit = $ingredient->cost_per_unit ?? 0;
+                    $qtyRequired = $recipe->quantity ?? $recipe->quantity_required ?? 0;
+                    $costPerUnit = $material->unit_price ?? 0;
                     $unitCogs += ($qtyRequired * $costPerUnit);
 
-                    // Potong Stok Fisik di tabel ingredients
+                    // Potong Stok Fisik ke tabel materials
                     $totalRequired = $qtyRequired * $itemData['quantity'];
-                    $ingredient->decrement('stock', $totalRequired);
+                    $material->decrement('stock_quantity', $totalRequired);
                 }
 
                 $itemCogsTotal = $unitCogs * $itemData['quantity'];
@@ -90,6 +91,7 @@ class PosController extends Controller
                 'payment_status' => 'paid',
                 'order_status'   => 'completed', 
                 'payment_method' => $request->payment_method,
+                'order_source'   => $request->order_source ?? 'offline_pos',
                 'source'         => 'pos',
             ]);
 
@@ -113,7 +115,7 @@ class PosController extends Controller
                         'type'             => 'inflow',
                         'category'         => 'POS Sales',
                         'amount'           => $totalAmount,
-                        'description'      => 'Transaksi POS Kasir: ' . $invoiceNumber,
+                        'description'      => 'Transaksi POS Kasir (' . ($request->order_source ?? 'POS') . '): ' . $invoiceNumber,
                         'transaction_date' => now(),
                     ]);
                 }

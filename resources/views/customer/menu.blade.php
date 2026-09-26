@@ -8,6 +8,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;0,800;1,400&display=swap" rel="stylesheet">
+    
+    <!-- LEAFLET MAPS CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #080808; color: #e5e5e5; }
         .font-serif-title { font-family: 'Playfair Display', serif; }
@@ -16,23 +21,24 @@
         .border-notte-gold { border-color: #c5a880; }
         .text-notte-gold { color: #c5a880; }
         .bg-notte-gold { background-color: #c5a880; }
+        #leaflet-map { height: 220px; width: 100%; border-radius: 0.75rem; z-index: 10; }
     </style>
 </head>
 <body class="bg-notte-black min-h-screen flex flex-col justify-between antialiased selection:bg-amber-900 selection:text-amber-100 relative pb-20">
 
-    <!-- BANNER DISKON BISA DI-CLOSE -->
+    <!-- BANNER DISKON -->
     @auth
         @if(Auth::user()->role === 'customer' && !Auth::user()->has_claimed_welcome_discount)
         <div id="welcome-discount-banner" class="bg-notte-gold text-black text-center py-2 px-4 text-[10px] md:text-xs font-bold uppercase tracking-widest relative z-[60] flex justify-between items-center">
-            <span class="mx-auto">✦ Selamat Datang {{ Auth::user()->name }}! Diskon 50% Pengguna Baru otomatis terpasang saat checkout ✦</span>
+            <span class="mx-auto">✦ Selamat Datang {{ Auth::user()->name }}! Diskon 50% otomatis terpasang saat checkout ✦</span>
             <button onclick="document.getElementById('welcome-discount-banner').remove()" class="text-black font-bold text-sm hover:opacity-75">✕</button>
         </div>
         @endif
     @endauth
 
-    <!-- FLOATING LIVE TRACKER BAR -->
+    <!-- FLOATING LIVE TRACKER -->
     @if(session('active_invoice'))
-    <div id="live-tracker-bar" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[90%] max-w-lg bg-[#121212]/95 backdrop-blur-md border border-[#c5a880]/60 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex items-center justify-between gap-4 transition-all duration-500">
+    <div id="live-tracker-bar" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[90%] max-w-lg bg-[#121212]/95 backdrop-blur-md border border-[#c5a880]/60 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex items-center justify-between gap-4">
         <div class="flex items-center gap-3">
             <span class="relative flex h-3 w-3">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c5a880] opacity-75"></span>
@@ -44,10 +50,10 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <a href="{{ route('customer.order.track', session('active_invoice')) }}" class="bg-[#c5a880] hover:bg-amber-600 text-black font-extrabold text-[10px] px-4 py-2 rounded-full transition uppercase tracking-wider whitespace-nowrap">
-                Lihat Struk →
+            <a href="{{ route('customer.order.track', session('active_invoice')) }}" class="bg-[#c5a880] text-black font-extrabold text-[10px] px-4 py-2 rounded-full uppercase tracking-wider">
+                Struk →
             </a>
-            <button onclick="closeTracker()" class="text-gray-400 hover:text-white font-bold px-1 text-sm">✕</button>
+            <button onclick="closeTracker()" class="text-gray-400 font-bold px-1 text-sm">✕</button>
         </div>
     </div>
     @endif
@@ -122,172 +128,177 @@
             </p>
         </div>
 
-        <!-- TAB FILTER KATEGORI MENU -->
         <div class="flex justify-center items-center gap-3 mb-12 flex-wrap">
-            <button onclick="filterCategory('all')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full transition uppercase tracking-wider bg-notte-gold text-black">
-                Semua Menu
-            </button>
-            <button onclick="filterCategory('Coffee')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full transition uppercase tracking-wider border border-neutral-800 text-gray-400 hover:border-notte-gold hover:text-notte-gold">
-                Coffee
-            </button>
-            <button onclick="filterCategory('1 Liter')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full transition uppercase tracking-wider border border-neutral-800 text-gray-400 hover:border-notte-gold hover:text-notte-gold">
-                1 Liter
-            </button>
-            <button onclick="filterCategory('Non-Coffee')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full transition uppercase tracking-wider border border-neutral-800 text-gray-400 hover:border-notte-gold hover:text-notte-gold">
-                Non-Coffee
-            </button>
-            <button onclick="filterCategory('Food')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full transition uppercase tracking-wider border border-neutral-800 text-gray-400 hover:border-notte-gold hover:text-notte-gold">
-                Food
-            </button>
-            <button onclick="filterCategory('Dessert')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full transition uppercase tracking-wider border border-neutral-800 text-gray-400 hover:border-notte-gold hover:text-notte-gold">
-                Dessert
-            </button>
+            <button onclick="filterCategory('all')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full bg-notte-gold text-black uppercase tracking-wider">Semua Menu</button>
+            <button onclick="filterCategory('Coffee')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">Coffee</button>
+            <button onclick="filterCategory('1 Liter')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">1 Liter</button>
+            <button onclick="filterCategory('Non-Coffee')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">Food</button>
+            <button onclick="filterCategory('Food')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">Food</button>
+            <button onclick="filterCategory('Dessert')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">Dessert</button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @forelse ($menus as $menu)
-            <div class="menu-card bg-notte-card border border-neutral-800/80 group flex flex-col justify-between transition-all duration-500 ease-out hover:-translate-y-2 hover:border-notte-gold/40 hover:shadow-[0_8px_30px_rgba(197,168,128,0.08)] overflow-hidden rounded-2xl" data-category="{{ $menu->category }}">
-                <div class="aspect-[4/5] overflow-hidden border-b border-neutral-800 relative bg-neutral-900">
-                    <img src="{{ $menu->image ?? 'https://images.unsplash.com/photo-1550461716-bf9173208941?q=80&w=600&auto=format&fit=crop' }}" 
-                         alt="{{ $menu->name }}" 
-                         class="w-full h-full object-cover group-hover:scale-105 transition duration-700 opacity-90">
+            <div class="menu-card bg-notte-card border border-neutral-800/80 group flex flex-col justify-between overflow-hidden rounded-2xl hover:border-notte-gold/40 transition-all" data-category="{{ $menu->category }}">
+                <div class="aspect-[4/5] overflow-hidden relative bg-neutral-900">
+                    <img src="{{ $menu->image ?? 'https://images.unsplash.com/photo-1550461716-bf9173208941?q=80&w=600' }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700 opacity-90">
                     <div class="absolute inset-0 bg-gradient-to-t from-notte-card via-transparent to-transparent opacity-80"></div>
                 </div>
-
                 <div class="p-6 flex flex-col flex-grow justify-between">
                     <div>
                         <span class="text-[10px] font-mono tracking-widest uppercase text-notte-gold block mb-1">{{ $menu->category }}</span>
                         <h3 class="font-serif-title text-2xl text-gray-100 mb-2">{{ $menu->name }}</h3>
-                        <p class="text-xs text-gray-400 leading-relaxed font-light mb-6 line-clamp-2">{{ $menu->description }}</p>
+                        <p class="text-xs text-gray-400 mb-6 line-clamp-2">{{ $menu->description }}</p>
                     </div>
-
                     <div class="pt-4 border-t border-neutral-800/80 flex justify-between items-center mt-auto">
                         <span class="font-serif-title text-xl text-gray-200">Rp{{ number_format($menu->selling_price, 0, ',', '.') }}</span>
-                        
                         @if(in_array($menu->category, ['1 Liter', 'Food', 'Dessert']))
-                            <button onclick="addDirectToCart({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{$menu->selling_price }})" 
-                                class="text-xs font-bold border border-notte-gold bg-notte-gold/10 text-notte-gold hover:bg-notte-gold hover:text-black px-5 py-2.5 rounded-full transition uppercase tracking-wider">
-                                + Tambah
-                            </button>
+                            <button onclick="addDirectToCart({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{$menu->selling_price }})" class="text-xs font-bold bg-notte-gold/10 text-notte-gold border border-notte-gold px-5 py-2.5 rounded-full uppercase">Tambahkan</button>
                         @else
-                            <button onclick="openModifierModal({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{$menu->selling_price }})" 
-                                class="text-xs font-bold border border-neutral-700 text-gray-300 hover:border-notte-gold hover:text-notte-gold px-5 py-2.5 rounded-full transition uppercase tracking-wider">
-                                + Tambah
-                            </button>
+                            <button onclick="openModifierModal({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{$menu->selling_price }})" class="text-xs font-bold border border-neutral-700 text-gray-300 hover:text-notte-gold px-5 py-2.5 rounded-full uppercase">Pilih Varian</button>
                         @endif
                     </div>
                 </div>
             </div>
             @empty
-            <div class="col-span-3 text-center py-20 text-gray-500 font-mono text-xs">Belum ada menu yang tersedia saat ini.</div>
+            <div class="col-span-3 text-center py-20 text-gray-500 font-mono text-xs">Belum ada menu yang tersedia.</div>
             @endforelse
         </div>
     </main>
 
-    <!-- MODAL POP-UP MODIFIER -->
+    <!-- MODAL MODIFIER -->
     <div id="modifier-modal" class="fixed inset-0 bg-notte-black/90 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-notte-card border border-neutral-800 w-full max-w-md p-8 rounded-2xl shadow-2xl space-y-6">
             <div class="flex justify-between items-center border-b border-neutral-800 pb-4">
                 <div>
-                    <span class="text-[10px] font-mono uppercase tracking-widest text-notte-gold block">Custom Order</span>
+                    <span class="text-[10px] font-mono uppercase text-notte-gold block">Custom Order</span>
                     <h2 id="modal-menu-name" class="font-serif-title text-2xl text-gray-100">Nama Menu</h2>
                 </div>
                 <button onclick="closeModifierModal()" class="text-gray-500 hover:text-white text-lg">✕</button>
             </div>
-
             <div class="space-y-6">
                 <div>
-                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">Ice Level</label>
+                    <label class="block text-[11px] font-bold uppercase text-gray-400 mb-2">Ice Level</label>
                     <div class="grid grid-cols-3 gap-2">
                         <button type="button" onclick="selectOption('ice', 'Normal Ice')" class="opt-ice text-xs border border-notte-gold bg-notte-gold text-black py-2.5 rounded-lg font-bold">Normal Ice</button>
-                        <button type="button" onclick="selectOption('ice', 'Less Ice')" class="opt-ice text-xs border border-neutral-800 text-gray-300 py-2.5 rounded-lg hover:border-notte-gold">Less Ice</button>
-                        <button type="button" onclick="selectOption('ice', 'No Ice')" class="opt-ice text-xs border border-neutral-800 text-gray-300 py-2.5 rounded-lg hover:border-notte-gold">No Ice</button>
+                        <button type="button" onclick="selectOption('ice', 'Less Ice')" class="opt-ice text-xs border border-neutral-800 text-gray-300 py-2.5 rounded-lg">Less Ice</button>
+                        <button type="button" onclick="selectOption('ice', 'No Ice')" class="opt-ice text-xs border border-neutral-800 text-gray-300 py-2.5 rounded-lg">No Ice</button>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">Sugar Level</label>
+                    <label class="block text-[11px] font-bold uppercase text-gray-400 mb-2">Sugar Level</label>
                     <div class="grid grid-cols-3 gap-2">
                         <button type="button" onclick="selectOption('sugar', 'Normal Sugar')" class="opt-sugar text-xs border border-notte-gold bg-notte-gold text-black py-2.5 rounded-lg font-bold">Normal Sugar</button>
-                        <button type="button" onclick="selectOption('sugar', 'Less Sugar')" class="opt-sugar text-xs border border-neutral-800 text-gray-300 py-2.5 rounded-lg hover:border-notte-gold">Less Sugar</button>
-                        <button type="button" onclick="selectOption('sugar', 'Extra Sugar')" class="opt-sugar text-xs border border-neutral-800 text-gray-300 py-2.5 rounded-lg hover:border-notte-gold">Extra Sugar</button>
+                        <button type="button" onclick="selectOption('sugar', 'Less Sugar')" class="opt-sugar text-xs border border-neutral-800 text-gray-300 py-2.5 rounded-lg">Less Sugar</button>
+                        <button type="button" onclick="selectOption('sugar', 'Extra Sugar')" class="opt-sugar text-xs border border-neutral-800 text-gray-300 py-2.5 rounded-lg">Extra Sugar</button>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">Catatan Khusus (Opsional)</label>
-                    <input type="text" id="modal-custom-note" placeholder="Contoh: Pisah es batu" class="w-full bg-notte-black border border-neutral-800 p-3 rounded-lg text-xs text-gray-200 outline-none focus:border-notte-gold">
+                    <label class="block text-[11px] font-bold uppercase text-gray-400 mb-1">Catatan Khusus</label>
+                    <input type="text" id="modal-custom-note" placeholder="Contoh: Pisah es batu" class="w-full bg-notte-black border border-neutral-800 p-3 rounded-lg text-xs text-gray-200 outline-none">
                 </div>
             </div>
-
-            <div class="border-t border-neutral-800 pt-6 flex items-center justify-between">
-                <div>
-                    <span class="text-[10px] text-gray-500 uppercase block">Total Harga</span>
-                    <span id="modal-menu-price" class="font-serif-title text-xl text-notte-gold">Rp0</span>
-                </div>
-                <button type="button" onclick="confirmAddToCart()" class="bg-notte-gold text-black font-extrabold text-xs uppercase tracking-widest px-6 py-3.5 rounded-full hover:bg-amber-600 transition">
-                    Masukkan Keranjang
-                </button>
+            <div class="border-t border-neutral-800 pt-6 flex justify-between items-center">
+                <span id="modal-menu-price" class="font-serif-title text-xl text-notte-gold">Rp0</span>
+                <button type="button" onclick="confirmAddToCart()" class="bg-notte-gold text-black font-extrabold text-xs uppercase px-6 py-3.5 rounded-full">Masukkan Keranjang</button>
             </div>
         </div>
     </div>
 
     <!-- DRAWER CART & CHECKOUT -->
     <div id="cart-drawer" class="fixed inset-0 bg-notte-black/80 backdrop-blur-sm z-50 hidden flex justify-end">
-        <div class="w-full max-w-md bg-notte-card border-l border-neutral-800 h-full p-8 flex flex-col justify-between overflow-y-auto">
+        <div class="w-full max-w-md bg-notte-card border-l border-neutral-800 h-full p-6 flex flex-col justify-between overflow-y-auto">
             <div>
-                <div class="flex justify-between items-center pb-6 border-b border-neutral-800 mb-6">
+                <div class="flex justify-between items-center pb-4 border-b border-neutral-800 mb-6">
                     <h2 class="font-serif-title text-2xl text-gray-100">Pesanan Anda</h2>
-                    <button onclick="toggleCart()" class="text-gray-500 hover:text-white text-lg">✕</button>
+                    <button onclick="toggleCart()" class="text-gray-500 hover:text-white text-xl font-bold">✕</button>
                 </div>
                 
-                <form id="checkout-form" action="{{ route('customer.checkout') }}" method="POST">
+                <!-- ONSUBMIT DITAMBAH DI SINI -->
+                <form id="checkout-form" action="{{ route('customer.checkout') }}" method="POST" onsubmit="return disableSubmitButton()">
                     @csrf
-                    <div id="cart-items-container" class="space-y-4 mb-8">
+                    <div id="cart-items-container" class="space-y-4 mb-6">
                         <p class="text-xs text-gray-500 text-center py-8 font-mono">Keranjang belanjaan masih kosong.</p>
                     </div>
                     
                     <div class="space-y-4 border-t border-neutral-800 pt-6">
                         <h3 class="text-xs font-bold uppercase tracking-widest text-notte-gold">Informasi Pemesan</h3>
                         <div>
-                            <label class="block text-xs text-gray-400 mb-1">Nama Lengkap</label>
-                            <input type="text" name="customer_name" value="{{ Auth::check() ? Auth::user()->name : '' }}" required class="w-full bg-notte-black border border-neutral-800 p-3 rounded-lg text-xs text-gray-200 focus:border-notte-gold outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1">Nomor WhatsApp</label>
-                            <input type="text" name="customer_phone" value="{{ Auth::check() ? Auth::user()->phone : '' }}" required placeholder="08123456789" class="w-full bg-notte-black border border-neutral-800 p-3 rounded-lg text-xs text-gray-200 focus:border-notte-gold outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1">Tipe Pesanan</label>
-                            <select name="order_type" id="order_type" onchange="toggleAddress()" class="w-full bg-notte-black border border-neutral-800 p-3 rounded-lg text-xs text-gray-200 focus:border-notte-gold outline-none">
+                            <input type="text" name="customer_name" value="{{ Auth::check() ? Auth::user()->name : '' }}" required placeholder="Nama Lengkap" class="w-full bg-notte-black border border-neutral-800 p-3 rounded-lg text-xs text-gray-200 outline-none mb-2">
+                            <input type="text" name="customer_phone" value="{{ Auth::check() ? Auth::user()->phone : '' }}" required placeholder="Nomor WhatsApp" class="w-full bg-notte-black border border-neutral-800 p-3 rounded-lg text-xs text-gray-200 outline-none mb-2">
+                            <select name="order_type" id="order_type" onchange="toggleAddress()" class="w-full bg-notte-black border border-neutral-800 p-3 rounded-lg text-xs text-gray-200 outline-none">
                                 <option value="delivery">Delivery (Anter ke Alamat)</option>
                                 <option value="pickup">Pickup (Ambil di Outlet)</option>
                             </select>
                         </div>
-                        <div id="address-field">
-                            <label class="block text-xs text-gray-400 mb-1">Alamat Lengkap Pengiriman</label>
-                            <textarea name="shipping_address" rows="2" class="w-full bg-notte-black border border-neutral-800 p-3 rounded-lg text-xs text-gray-200 focus:border-notte-gold outline-none">{{ Auth::check() ? Auth::user()->address : '' }}</textarea>
+
+                        <!-- FIELD ALAMAT & PETA INTERAKTIF -->
+                        <div id="address-field" class="space-y-3 relative bg-neutral-900/50 p-3 rounded-xl border border-neutral-800">
+                            
+                            <!-- Header Peta & Tombol GPS -->
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lokasi Pengiriman (Max 3 KM)</label>
+                                <button type="button" onclick="getCurrentLocation()" class="text-[9px] bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-notte-gold px-2 py-1 rounded flex items-center gap-1 transition uppercase tracking-widest">
+                                    📍 Deteksi GPS
+                                </button>
+                            </div>
+                            
+                            <!-- Peta Leaflet -->
+                            <div id="leaflet-map" class="border border-neutral-700"></div>
+                            
+                            <!-- Textarea Alamat (Bisa diketik, bisa auto-fill) -->
+                            <div class="relative">
+                                <textarea name="shipping_address" id="shipping_address" rows="2" placeholder="Geser pin di peta, klik Deteksi GPS, atau ketik alamat lu..." oninput="handleAddressInput()" class="w-full bg-notte-black border border-neutral-700 p-3 rounded-lg text-xs text-gray-200 focus:border-notte-gold outline-none">{{ Auth::check() ? Auth::user()->address : '' }}</textarea>
+                                
+                                <!-- DROPDOWN SUGGESTION ALAMAT -->
+                                <div id="address-suggestions" class="hidden absolute left-0 right-0 top-[100%] mt-1 bg-[#1a1a1a] border border-neutral-700 rounded-lg shadow-2xl z-50 max-h-48 overflow-y-auto divide-y divide-neutral-800"></div>
+                            </div>
+
+                            <!-- Indikator Jarak -->
+                            <div id="distance-info" class="p-3 rounded-lg text-xs font-semibold flex items-center justify-between bg-neutral-950 border border-neutral-800">
+                                <span id="distance-text" class="text-gray-400">Pilih titik di peta...</span>
+                                <span id="delivery-fee-badge" class="font-bold text-emerald-400"></span>
+                            </div>
                         </div>
                     </div>
                 </form>
             </div>
 
             <div class="border-t border-neutral-800 pt-6 mt-6 space-y-3">
-                @auth
-                    @if(Auth::user()->role === 'customer' && !Auth::user()->has_claimed_welcome_discount)
-                        <div class="p-3 bg-notte-gold/10 border border-notte-gold/40 rounded-xl flex justify-between items-center text-xs">
-                            <span class="text-notte-gold font-bold">🎉 Diskon 50% Pengguna Baru</span>
-                            <span class="text-emerald-400 font-mono font-bold">-50% OFF</span>
-                        </div>
-                    @endif
-                @endauth
-
                 <div class="flex justify-between items-center">
                     <span class="text-xs text-gray-400 uppercase tracking-wider">Total Pembayaran</span>
-                    <div class="text-right">
-                        <span id="cart-total" class="font-serif-title text-2xl text-notte-gold block">Rp0</span>
-                    </div>
+                    <span id="cart-total" class="font-serif-title text-2xl text-notte-gold">Rp0</span>
                 </div>
-                <button type="submit" form="checkout-form" class="w-full bg-notte-gold text-black font-extrabold text-xs tracking-widest uppercase py-4 rounded-full hover:bg-amber-600 transition shadow-lg">
-                    Konfirmasi Checkout
+
+                <div id="checkout-action-container">
+                    <button type="submit" id="submit-checkout-btn" form="checkout-form" class="w-full bg-notte-gold text-black font-extrabold text-xs tracking-widest uppercase py-4 rounded-full shadow-lg">Konfirmasi Checkout</button>
+
+                    <!-- TOMBOL SHOPEEFOOD HYBRID -->
+                    <a id="shopeefood-btn" 
+                       onclick="openShopeeFood(event)"
+                       href="https://shopee.co.id/universal-link/now-food/shop/23386724?deep_and_deferred=1&shareChannel=whatsapp" 
+                       target="_blank" 
+                       class="hidden w-full bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-xs tracking-widest uppercase py-4 rounded-full text-center flex items-center justify-center gap-2 shadow-lg cursor-pointer">
+                        <span>Pesan via ShopeeFood</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL POP-UP KHUSUS PC SHOPEEFOOD -->
+    <div id="shopeefood-pc-modal" class="fixed inset-0 bg-notte-black/90 backdrop-blur-sm z-[80] hidden flex items-center justify-center p-4">
+        <div class="bg-notte-card border border-notte-gold/60 w-full max-w-sm p-6 rounded-2xl shadow-2xl space-y-4 text-center">
+            <div>
+                <span class="text-[10px] font-mono uppercase tracking-widest text-notte-gold block mb-1">Pemberitahuan ShopeeFood</span>
+                <h3 class="font-serif-title text-xl font-bold text-gray-100">Khusus Aplikasi HP</h3>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed">
+                Layanan ShopeeFood cuma bisa dipesan lewat aplikasi Shopee di HP kamu!
+            </p>
+            <div class="pt-2 border-t border-neutral-800 space-y-2">
+                <button type="button" onclick="document.getElementById('shopeefood-pc-modal').classList.add('hidden')" class="w-full bg-notte-gold text-black font-extrabold text-xs uppercase tracking-widest py-3 rounded-full hover:bg-amber-600 transition">
+                    Oke
                 </button>
             </div>
         </div>
@@ -309,10 +320,209 @@
         let selectedIce = 'Normal Ice';
         let selectedSugar = 'Normal Sugar';
 
-        function toggleCart() { document.getElementById('cart-drawer').classList.toggle('hidden'); }
+        // KOORDINAT FIX NOTTE JATIMURNI
+        const NOTTE_LAT = -6.31971;
+        const NOTTE_LNG = 106.92484;
+        let map, userMarker, outletMarker;
+        let debounceTimer;
+
+        // DISABLE SUBMIT BUTTON BIAR GAK SPAM
+        function disableSubmitButton() {
+            const btn = document.getElementById('submit-checkout-btn');
+            
+            // Kalau keranjang kosong, cegah submit
+            if (Object.keys(cart).length === 0) {
+                alert("Keranjang lu masih kosong, Bro!");
+                return false;
+            }
+
+            // Matiin tombol biar gak bisa diklik 2x
+            btn.disabled = true;
+            btn.innerHTML = 'MEMPROSES... ⏳';
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.classList.remove('hover:bg-amber-600');
+            
+            return true; 
+        }
+
+        // FUNGSI HANDLER HYBRID SHOPEEFOOD
+        function openShopeeFood(event) {
+            const shopeeFoodAppUrl = "https://shopee.co.id/universal-link/now-food/shop/23386724?deep_and_deferred=1&shareChannel=whatsapp";
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            if (!isMobile) {
+                event.preventDefault();
+                // Munculkan modal khusus PC
+                document.getElementById('shopeefood-pc-modal').classList.remove('hidden');
+            } else {
+                window.location.href = shopeeFoodAppUrl;
+            }
+        }
+
+        function initMap() {
+            if (map) return;
+            map = L.map('leaflet-map').setView([NOTTE_LAT, NOTTE_LNG], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
+
+            outletMarker = L.marker([NOTTE_LAT, NOTTE_LNG]).addTo(map)
+                .bindPopup('<b>NOTTE Coffee Jatimurni</b>').openPopup();
+
+            // EVENT KLIK DI PETA (PIN PINDAH OTOMATIS)
+            map.on('click', function(e) {
+                updateUserMarker(e.latlng.lat, e.latlng.lng, true);
+            });
+        }
+
+        function toggleCart() { 
+            const drawer = document.getElementById('cart-drawer');
+            drawer.classList.toggle('hidden');
+            if (!drawer.classList.contains('hidden')) {
+                setTimeout(() => {
+                    initMap();
+                    const currentAddress = document.getElementById('shipping_address').value.trim();
+                    if(currentAddress) searchLocationNominatim(currentAddress, false);
+                }, 300);
+            }
+        }
+
         function toggleAddress() {
             const type = document.getElementById('order_type').value;
-            document.getElementById('address-field').style.display = type === 'delivery' ? 'block' : 'none';
+            const addrField = document.getElementById('address-field');
+            if (type === 'delivery') {
+                addrField.style.display = 'block';
+                if(map) map.invalidateSize();
+                const currentAddress = document.getElementById('shipping_address').value.trim();
+                if(currentAddress) searchLocationNominatim(currentAddress, false);
+            } else {
+                addrField.style.display = 'none';
+                enableCheckout("Pickup Outlet (Bebas Radius)", true);
+            }
+        }
+
+        function getHaversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; 
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+        }
+
+        // FUNGSI TARIK LOKASI GPS CUSTOMER
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                document.getElementById('distance-text').innerText = "Mencari GPS...";
+                navigator.geolocation.getCurrentPosition(
+                    (position) => updateUserMarker(position.coords.latitude, position.coords.longitude, true),
+                    (error) => alert("Gagal akses GPS. Pastikan izin lokasi aktif atau ketik manual/geser peta.")
+                );
+            } else {
+                alert("Browser lu gak dukung GPS.");
+            }
+        }
+
+        // FUNGSI UTAMA PIN & JARAK
+        function updateUserMarker(lat, lng, doReverseGeocode = false) {
+            if (!map) initMap();
+
+            if (userMarker) {
+                userMarker.setLatLng([lat, lng]);
+            } else {
+                userMarker = L.marker([lat, lng], { draggable: true }).addTo(map)
+                    .bindPopup('Geser pin ini ke titik pas rumah lu').openPopup();
+                
+                userMarker.on('dragend', function(e) {
+                    const pos = userMarker.getLatLng();
+                    updateUserMarker(pos.lat, pos.lng, true);
+                });
+            }
+
+            const group = L.featureGroup([outletMarker, userMarker]);
+            map.fitBounds(group.getBounds().pad(0.3));
+
+            const distance = getHaversineDistance(NOTTE_LAT, NOTTE_LNG, lat, lng);
+            const distanceFormatted = distance.toFixed(1);
+
+            if (distance <= 3.0) {
+                enableCheckout(`Jarak ${distanceFormatted} KM (Bebas Ongkir)`, true);
+            } else {
+                disableCheckout(`Jarak ${distanceFormatted} KM. Maks delivery 3 KM.`);
+            }
+
+            if (doReverseGeocode) {
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.display_name) {
+                            document.getElementById('shipping_address').value = data.display_name;
+                        }
+                    });
+            }
+        }
+
+        // FUNGSI KETIK ALAMAT (AUTOCOMPLETE)
+        function handleAddressInput() {
+            clearTimeout(debounceTimer);
+            const query = document.getElementById('shipping_address').value.trim();
+            const suggestionsBox = document.getElementById('address-suggestions');
+
+            if (query.length < 4) {
+                suggestionsBox.classList.add('hidden');
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=id&limit=5`)
+                    .then(res => res.json())
+                    .then(data => {
+                        suggestionsBox.innerHTML = '';
+                        if (data && data.length > 0) {
+                            data.forEach(item => {
+                                const div = document.createElement('div');
+                                div.className = 'p-3 hover:bg-neutral-800 cursor-pointer text-xs text-gray-300 transition';
+                                div.innerText = item.display_name;
+                                div.onclick = () => {
+                                    document.getElementById('shipping_address').value = item.display_name;
+                                    suggestionsBox.classList.add('hidden');
+                                    updateUserMarker(parseFloat(item.lat), parseFloat(item.lon), false);
+                                };
+                                suggestionsBox.appendChild(div);
+                            });
+                            suggestionsBox.classList.remove('hidden');
+                        } else {
+                            suggestionsBox.classList.add('hidden');
+                        }
+                    }).catch(() => suggestionsBox.classList.add('hidden'));
+            }, 500);
+        }
+
+        function searchLocationNominatim(address, doReverse = false) {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=id&limit=1`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        updateUserMarker(parseFloat(data[0].lat), parseFloat(data[0].lon), doReverse);
+                    }
+                });
+        }
+
+        function enableCheckout(msg, isFree) {
+            document.getElementById('submit-checkout-btn').classList.remove('hidden');
+            document.getElementById('shopeefood-btn').classList.add('hidden');
+            document.getElementById('distance-text').innerText = msg;
+            document.getElementById('distance-text').className = "text-emerald-400 font-bold";
+            document.getElementById('delivery-fee-badge').innerText = isFree ? "Ongkir Rp0" : "";
+        }
+
+        function disableCheckout(msg) {
+            document.getElementById('submit-checkout-btn').classList.add('hidden');
+            document.getElementById('shopeefood-btn').classList.remove('hidden');
+            document.getElementById('distance-text').innerText = msg;
+            document.getElementById('distance-text').className = "text-rose-400 font-bold";
+            document.getElementById('delivery-fee-badge').innerText = "Lebih dari 3 KM";
         }
 
         // FILTER KATEGORI MENU

@@ -12,7 +12,8 @@ class MenuController extends Controller
 {
     public function index()
     {
-        $menus = Menu::with('materials')->latest()->get();
+        // FIX: Load relasi recipes.ingredient supaya nama bahan langsung ketarik di view
+        $menus = Menu::with(['materials', 'recipes.ingredient'])->latest()->get();
         return view('admin.menus.index', compact('menus'));
     }
 
@@ -52,7 +53,7 @@ class MenuController extends Controller
         if ($request->has('materials') && is_array($request->materials)) {
             foreach ($request->materials as $index => $materialId) {
                 if (!empty($materialId) && isset($request->amounts[$index]) && $request->amounts[$index] > 0) {
-                    $syncData[(int)$materialId] = ['quantity_required' => $request->amounts[$index]];
+                    $syncData[(int)$materialId] = ['quantity' => $request->amounts[$index]];
                 }
             }
         }
@@ -78,27 +79,23 @@ class MenuController extends Controller
             'category' => 'required|string|max:100',
             'selling_price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Max 2MB
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'materials' => 'nullable|array',
             'amounts' => 'nullable|array',
         ]);
 
         $imageUrl = $menu->image;
 
-        // Cek jika user mengunggah foto produk baru
         if ($request->hasFile('image')) {
-            // Hapus file lama jika disimpan lokal di storage (bukan URL unsplash)
             if ($menu->image && str_contains($menu->image, '/storage/')) {
                 $oldPath = str_replace('/storage/', '', $menu->image);
                 Storage::disk('public')->delete($oldPath);
             }
 
-            // Simpan foto baru
             $newPath = $request->file('image')->store('menus', 'public');
             $imageUrl = Storage::url($newPath);
         }
 
-        // 1. Update Data Utama Menu
         $menu->update([
             'name' => $request->name,
             'category' => $request->category,
@@ -107,12 +104,11 @@ class MenuController extends Controller
             'image' => $imageUrl,
         ]);
 
-        // 2. Sinkronisasi Bahan Baku (Pivot Table)
         $syncData = [];
         if ($request->has('materials') && is_array($request->materials)) {
             foreach ($request->materials as $index => $materialId) {
                 if (!empty($materialId) && isset($request->amounts[$index]) && $request->amounts[$index] > 0) {
-                    $syncData[(int)$materialId] = ['quantity_required' => $request->amounts[$index]];
+                    $syncData[(int)$materialId] = ['quantity' => $request->amounts[$index]];
                 }
             }
         }
@@ -124,7 +120,6 @@ class MenuController extends Controller
 
     public function destroy(Menu $menu)
     {
-        // Hapus file gambar dari storage jika ada
         if ($menu->image && str_contains($menu->image, '/storage/')) {
             $oldPath = str_replace('/storage/', '', $menu->image);
             Storage::disk('public')->delete($oldPath);

@@ -13,9 +13,10 @@ class Recipe extends Model
         'menu_id',
         'ingredient_id',
         'quantity',
+        'quantity_required'
     ];
 
-    // ALIAS SUPAYA VIEW ADMIN TIDAK ERROR KETIKA MEMANGGIL quantity_required
+    // ALIAS SUPAYA VIEW ADMIN TIDAK ERROR
     public function getQuantityRequiredAttribute()
     {
         return $this->quantity;
@@ -26,8 +27,15 @@ class Recipe extends Model
         return $this->belongsTo(Menu::class);
     }
 
+    // Dipakai oleh Controller & Hitung HPP
+    public function material()
+    {
+        return $this->belongsTo(Material::class, 'ingredient_id');
+    }
+
+    // ALIAS WAJIB BIAR VIEW BLADE LU GAK BLANK "Bahan Tidak Ditemukan"
     public function ingredient()
     {
-        return $this->belongsTo(Ingredient::class);
+        return $this->belongsTo(Material::class, 'ingredient_id');
     }
 }

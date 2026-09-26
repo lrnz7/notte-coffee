@@ -28,7 +28,7 @@
     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Omzet (Penjualan)</p>
         <h3 class="text-2xl font-extrabold text-gray-900 mt-2">Rp{{ number_format($totalRevenue, 0, ',', '.') }}</h3>
-        <p class="text-xs text-emerald-600 mt-2 font-medium">Dari transaksi selesai</p>
+        <p class="text-xs text-emerald-600 mt-2 font-medium">Dari seluruh transaksi selesai</p>
     </div>
 
     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -50,30 +50,48 @@
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Tabel Transaksi Terbaru -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6" x-data="{ tab: 'all' }">
+    <!-- Tabel Transaksi Terbaru dengan Tab PEMISAH SOURCING -->
     <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <div class="flex justify-between items-center mb-4 pb-2 border-b">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 pb-3 border-b gap-3">
             <h3 class="font-bold text-gray-800">Transaksi Terbaru</h3>
-            <a href="{{ route('orders.index') }}" class="text-xs text-amber-600 font-bold hover:underline">Lihat Semua →</a>
+            
+            <!-- TAB NAVIGASI JALUR TRANSAKSI -->
+            <div class="flex space-x-1 bg-gray-100 p-1 rounded-lg text-xs font-bold">
+                <button @click="tab = 'all'" :class="tab === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'" class="px-3 py-1.5 rounded-md transition">Semua</button>
+                <button @click="tab = 'offline_pos'" :class="tab === 'offline_pos' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'" class="px-3 py-1.5 rounded-md transition">Offline POS</button>
+                <button @click="tab = 'online_web'" :class="tab === 'online_web' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'" class="px-3 py-1.5 rounded-md transition">Online Web</button>
+                <button @click="tab = 'merchant'" :class="tab === 'merchant' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'" class="px-3 py-1.5 rounded-md transition">Merchant</button>
+            </div>
         </div>
+
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
                 <thead>
                     <tr class="text-xs text-gray-400 uppercase border-b">
                         <th class="pb-3">Invoice</th>
                         <th class="pb-3">Pelanggan</th>
-                        <th class="pb-3">Tipe</th>
+                        <th class="pb-3">Jalur (Source)</th>
                         <th class="pb-3">Total</th>
                         <th class="pb-3">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
                     @forelse($recentOrders as $order)
-                    <tr>
+                    <tr x-show="tab === 'all' || 
+                                (tab === 'offline_pos' && '{{ $order->order_source }}' === 'offline_pos') ||
+                                (tab === 'online_web' && '{{ $order->order_source }}' === 'online_web') ||
+                                (tab === 'merchant' && ('{{ $order->order_source }}'.includes('merchant') || '{{ $order->order_source }}' === 'merchant'))">
                         <td class="py-3 font-semibold text-gray-800">{{ $order->invoice_number }}</td>
                         <td class="py-3">{{ $order->customer_name }}</td>
-                        <td class="py-3 uppercase text-xs font-bold text-gray-500">{{ $order->order_type }}</td>
+                        <td class="py-3">
+                            <span class="px-2 py-0.5 text-[10px] font-extrabold rounded uppercase 
+                                {{ $order->order_source == 'offline_pos' ? 'bg-slate-100 text-slate-700' : '' }}
+                                {{ $order->order_source == 'online_web' ? 'bg-blue-100 text-blue-700' : '' }}
+                                {{ str_contains($order->order_source, 'merchant') ? 'bg-orange-100 text-orange-700' : '' }}">
+                                {{ str_replace('_', ' ', $order->order_source ?? 'online_web') }}
+                            </span>
+                        </td>
                         <td class="py-3 font-bold text-amber-600">Rp{{ number_format($order->total_amount, 0, ',', '.') }}</td>
                         <td class="py-3">
                             <span class="px-2 py-0.5 text-xs font-bold rounded-full 

@@ -73,6 +73,8 @@ class CustomerController extends Controller
                 'shipping_address' => $request->shipping_address ?? '-',
                 'order_type' => $request->order_type,
                 'payment_method' => 'qris',
+                'order_source' => 'online_web', // SINKRONISASI TAB DASHBOARD
+                'source' => 'web',
                 'status' => 'pending_payment',
                 'total_amount' => $totalAmount,
                 'total_cogs' => $totalCogs, // HPP Masuk ERP

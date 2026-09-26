@@ -25,8 +25,18 @@ class AdminController extends Controller
         // 3. Low Stock Alert (Bahan baku yang stoknya <= min_stock_alert)
         $lowStockMaterials = Material::whereRaw('stock_quantity <= min_stock_alert')->get();
 
-        // 4. Pesanan Terbaru
-        $recentOrders = Order::latest()->take(5)->get();
+        // 4. Pesanan Terbaru (Ambil 30 transaksi terakhir biar semua tab kebagian data)
+        $recentOrders = Order::latest()->take(30)->get()->map(function ($order) {
+            // Jika order_source masih kosong di database, otomatis beri default berdasarkan source/invoice
+            if (empty($order->order_source)) {
+                if (str_contains($order->invoice_number, 'NOTTE-POS')) {
+                    $order->order_source = 'offline_pos';
+                } else {
+                    $order->order_source = 'online_web';
+                }
+            }
+            return $order;
+        });
 
         return view('admin.dashboard', compact(
             'totalRevenue',

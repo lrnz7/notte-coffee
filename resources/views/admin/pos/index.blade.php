@@ -46,11 +46,20 @@
                 <button @click="clearCart()" class="text-xs text-red-500 hover:underline font-normal" x-show="cart.length > 0">Kosongkan</button>
             </h3>
 
-            <!-- Nama Pelanggan & Metode Bayar -->
+            <!-- Nama Pelanggan, Sumber Pesanan & Metode Bayar -->
             <div class="space-y-3 mb-4">
                 <div>
                     <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Nama Pelanggan / Meja</label>
                     <input type="text" x-model="customerName" placeholder="Walk-in Customer" class="w-full border border-gray-300 p-2 rounded text-xs focus:ring-amber-500 focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Sumber Pesanan (Jalur)</label>
+                    <select x-model="orderSource" class="w-full border border-gray-300 p-2 rounded text-xs bg-white font-bold text-amber-700">
+                        <option value="offline_pos">Offline POS Kasir</option>
+                        <option value="merchant_shopee">ShopeeFood Merchant</option>
+                        <option value="merchant_gofood">GoFood Merchant</option>
+                        <option value="merchant_grab">GrabFood Merchant</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Metode Pembayaran</label>
@@ -63,7 +72,7 @@
             </div>
 
             <!-- List Items in Cart -->
-            <div class="max-h-[300px] overflow-y-auto space-y-3 pr-1 border-t border-b border-gray-100 py-3">
+            <div class="max-h-[250px] overflow-y-auto space-y-3 pr-1 border-t border-b border-gray-100 py-3">
                 <template x-if="cart.length === 0">
                     <div class="text-center py-8 text-gray-400">
                         <p class="text-xs">Keranjang masih kosong</p>
@@ -153,11 +162,10 @@
                         <div class="flex justify-between items-end mt-3 pt-3 border-t border-gray-100">
                             <div>
                                 <p class="text-xs font-semibold text-gray-700">{{ $ro->customer_name }}</p>
-                                <p class="text-[10px] text-gray-500 uppercase">{{ $ro->payment_method }}</p>
+                                <p class="text-[10px] text-gray-500 uppercase">{{ $ro->payment_method }} • {{ $ro->order_source ?? 'POS' }}</p>
                             </div>
                             <div class="text-right flex flex-col items-end">
                                 <span class="font-extrabold text-sm text-amber-600 mb-1.5">Rp{{ number_format($ro->total_amount, 0, ',', '.') }}</span>
-                                <!-- Tombol Detail yang Baru Ditambahin -->
                                 <a href="{{ route('orders.show', $ro->id) }}" class="text-[10px] font-bold bg-slate-900 text-white px-3 py-1.5 rounded hover:bg-slate-800 transition">
                                     Lihat Detail →
                                 </a>
@@ -182,7 +190,8 @@
             showHistory: false,
             menus: @json($menus),
             search: '',
-            customerName: 'Walk-in Customer',
+            customerName: '',
+            orderSource: 'offline_pos',
             paymentMethod: 'Cash',
             cart: [],
             loading: false,
@@ -211,7 +220,9 @@
                 if (!this.customerName.trim()) { alert('Isi nama pelanggan/meja.'); return; }
                 this.loading = true;
                 const payload = {
-                    customer_name: this.customerName, payment_method: this.paymentMethod,
+                    customer_name: this.customerName,
+                    order_source: this.orderSource,
+                    payment_method: this.paymentMethod,
                     items: this.cart.map(item => ({ menu_id: item.id, quantity: item.quantity, ice_level: item.ice_level, sugar_level: item.sugar_level }))
                 };
                 try {

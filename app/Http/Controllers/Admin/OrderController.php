@@ -25,8 +25,8 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        // Load relasi yang benar sesuai ERP
-        $order->load('orderItems.menu.recipes.ingredient');
+        // PERBAIKAN: Load relasi material, bukan ingredient
+        $order->load('orderItems.menu.recipes.material');
         return view('admin.orders.show', compact('order'));
     }
 
@@ -41,37 +41,38 @@ class OrderController extends Controller
 
         DB::beginTransaction();
         try {
-            // LOGIKA 1: Potong stok jika berubah dari status awal ke status diproses/selesai
+            // LOGIKA 1: Potong stok
             if (in_array($oldStatus, ['pending', 'pending_payment', 'waiting_verification']) && in_array($newStatus, ['processing', 'completed'])) {
                 foreach ($order->orderItems as $item) {
-                    $menu = $item->menu->load('recipes.ingredient');
+                    $menu = $item->menu->load('recipes.material');
                     
                     foreach ($menu->recipes as $recipe) {
-                        $ingredient = $recipe->ingredient;
-                        if (!$ingredient) continue;
+                        $material = $recipe->material;
+                        if (!$material) continue;
 
-                        $qtyRequired = $recipe->quantity;
+                        $qtyRequired = $recipe->quantity ?? $recipe->quantity_required ?? 0;
                         $deductAmount = $qtyRequired * $item->quantity;
 
-                        if ($ingredient->stock < $deductAmount) {
-                            throw new \Exception("Gagal memproses! Stok bahan {$ingredient->name} tidak cukup.");
+                        if ($material->stock_quantity < $deductAmount) {
+                            throw new \Exception("Gagal memproses! Stok bahan {$material->name} tidak cukup.");
                         }
 
-                        $ingredient->decrement('stock', $deductAmount);
+                        $material->decrement('stock_quantity', $deductAmount);
                     }
                 }
             }
 
-            // LOGIKA 2: Restock otomatis jika pesanan yang sudah diproses tiba-tiba dibatalkan
+            // LOGIKA 2: Restock otomatis jika pesanan dibatalkan
             if (in_array($oldStatus, ['processing', 'completed']) && $newStatus === 'cancelled') {
                 foreach ($order->orderItems as $item) {
-                    $menu = $item->menu->load('recipes.ingredient');
+                    $menu = $item->menu->load('recipes.material');
                     
                     foreach ($menu->recipes as $recipe) {
-                        $ingredient = $recipe->ingredient;
-                        if ($ingredient) {
-                            $restockAmount = $recipe->quantity * $item->quantity;
-                            $ingredient->increment('stock', $restockAmount);
+                        $material = $recipe->material;
+                        if ($material) {
+                            $qtyRequired = $recipe->quantity ?? $recipe->quantity_required ?? 0;
+                            $restockAmount = $qtyRequired * $item->quantity;
+                            $material->increment('stock_quantity', $restockAmount);
                         }
                     }
                 }
