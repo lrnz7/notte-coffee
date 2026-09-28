@@ -36,24 +36,42 @@ class CustomerController extends Controller
 
         DB::beginTransaction();
         try {
+            // CEK LIMIT ANTREAN DAPUR
+            $maxQueue = config('notte.max_kitchen_queue', 5);
+            $activeOrders = Order::where('status', 'processing')->count();
+            if ($activeOrders >= $maxQueue) {
+                throw new \Exception("Mohon maaf Kak, antrean dapur saat ini sedang padat ({$activeOrders}/{$maxQueue} pesanan). Mohon tunggu beberapa saat sebelum membuat pesanan baru.");
+            }
+
             $totalAmount = 0;
             $totalCogs = 0;
+            $totalHpp = 0;
             $discountAmount = 0;
             
             $user = Auth::user();
             $isCustomer = ($user && $user->role === 'customer');
 
-            // Hitung Total Belanja & HPP (COGS)
+            // Hitung Total Belanja & HPP (Moving Average Cost dari Resep Bahan Baku)
             foreach ($request->cart as $item) {
-                $menu = Menu::findOrFail($item['menu_id']);
+                $menu = Menu::with('recipes.material')->lockForUpdate()->findOrFail($item['menu_id']);
                 $quantity = (int)$item['quantity'];
                 
                 $itemPrice = $menu->selling_price;
-                // Ambil HPP dari relasi resep bahan baku di ERP
-                $itemCogs = method_exists($menu, 'getCalculatedHppAttribute') ? $menu->calculated_hpp : ($menu->selling_price * 0.4);
+
+                $itemHpp = 0;
+                foreach ($menu->recipes as $recipe) {
+                    if ($recipe->material) {
+                        $qtyReq = $recipe->quantity ?? $recipe->quantity_required ?? 0;
+                        $itemHpp += ($qtyReq * (float) $recipe->material->unit_price);
+                    }
+                }
+                if ($itemHpp == 0) {
+                    $itemHpp = method_exists($menu, 'getCalculatedHppAttribute') ? $menu->calculated_hpp : ($menu->selling_price * 0.4);
+                }
 
                 $totalAmount += $itemPrice * $quantity;
-                $totalCogs += $itemCogs * $quantity;
+                $totalCogs += $itemHpp * $quantity;
+                $totalHpp += $itemHpp * $quantity;
             }
 
             // Potongan Diskon 50% Pengguna Baru (Hanya untuk Customer)
@@ -73,27 +91,38 @@ class CustomerController extends Controller
                 'shipping_address' => $request->shipping_address ?? '-',
                 'order_type' => $request->order_type,
                 'payment_method' => 'qris',
-                'order_source' => 'online_web', // SINKRONISASI TAB DASHBOARD
+                'order_source' => 'online',
                 'source' => 'web',
                 'status' => 'pending_payment',
                 'total_amount' => $totalAmount,
-                'total_cogs' => $totalCogs, // HPP Masuk ERP
+                'total_cogs' => $totalCogs,
+                'total_hpp' => $totalHpp,
                 'discount_amount' => $discountAmount,
-                'gross_profit' => $totalAmount - $totalCogs, // Profit Bersih Masuk ERP
+                'gross_profit' => $totalAmount - $totalHpp,
             ]);
 
             // Simpan Detail Item Order
             foreach ($request->cart as $item) {
-                $menu = Menu::findOrFail($item['menu_id']);
+                $menu = Menu::with('recipes.material')->findOrFail($item['menu_id']);
                 $quantity = (int)$item['quantity'];
-                $itemCogs = method_exists($menu, 'getCalculatedHppAttribute') ? $menu->calculated_hpp : ($menu->selling_price * 0.4);
+                
+                $itemHpp = 0;
+                foreach ($menu->recipes as $recipe) {
+                    if ($recipe->material) {
+                        $qtyReq = $recipe->quantity ?? $recipe->quantity_required ?? 0;
+                        $itemHpp += ($qtyReq * (float) $recipe->material->unit_price);
+                    }
+                }
+                if ($itemHpp == 0) {
+                    $itemHpp = method_exists($menu, 'getCalculatedHppAttribute') ? $menu->calculated_hpp : ($menu->selling_price * 0.4);
+                }
 
                 OrderItem::create([
                     'order_id' => $order->id,
                     'menu_id' => $menu->id,
                     'quantity' => $quantity,
                     'price_at_purchase' => $menu->selling_price,
-                    'cogs_at_purchase' => $itemCogs,
+                    'cogs_at_purchase' => $itemHpp,
                     'note' => $item['note'] ?? '-',
                 ]);
             }
@@ -107,7 +136,7 @@ class CustomerController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal memproses checkout: ' . $e->getMessage());
+            return back()->with('error', $e->getMessage());
         }
     }
 
@@ -129,14 +158,10 @@ class CustomerController extends Controller
 
             if ($request->hasFile('payment_proof')) {
                 $file = $request->file('payment_proof');
-                $filename = 'proof_' . time() . '.' . $file->getClientOriginalExtension();
                 
-                $destinationPath = public_path('uploads/payment_proofs');
-                if (!file_exists($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
-                }
-
-                $file->move($destinationPath, $filename);
+                // Simpan secara aman di disk 'local' (storage/app/payment_proofs)
+                $path = $file->store('payment_proofs', 'local');
+                $filename = basename($path);
 
                 $order->update([
                     'payment_proof' => $filename,

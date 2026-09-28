@@ -34,51 +34,61 @@ Route::get('/terms', [PageController::class, 'terms'])->name('pages.terms');
 
 /*
 |--------------------------------------------------------------------------
-| Authentication Routes
+| Authentication Routes (Secured with Guest Middleware)
 |--------------------------------------------------------------------------
 */
-// Customer Auth (Tampilan Luxury Gold)
-Route::get('/login', [AuthController::class, 'showCustomerLogin'])->name('login');
-Route::post('/customer/login', [AuthController::class, 'customerLogin'])->name('customer.login.post');
-Route::post('/customer/register', [AuthController::class, 'customerRegister'])->name('customer.register.post');
+// Customer Auth (Tampilan Luxury Gold) - Hanya untuk guest customer
+Route::middleware('guest:web')->group(function () {
+    Route::get('/login', [AuthController::class, 'showCustomerLogin'])->name('login');
+    Route::post('/customer/login', [AuthController::class, 'customerLogin'])->name('customer.login.post');
+    Route::post('/customer/register', [AuthController::class, 'customerRegister'])->name('customer.register.post');
+});
 
-// Staff ERP Admin / Kasir Auth (Biar Form Bawaan ERP Lu Gak Error)
-Route::get('/admin/login', [AuthController::class, 'showLogin'])->name('admin.login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.post'); // Alias untuk login.post bawaan form ERP
-Route::post('/admin/login', [AuthController::class, 'login'])->name('admin.login.post');
+// Staff ERP Admin / Kasir Auth - Hanya untuk guest admin
+Route::middleware('guest:admin')->group(function () {
+    Route::get('/admin/login', [AuthController::class, 'showLogin'])->name('admin.login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.post'); // Alias untuk form bawaan
+    Route::post('/admin/login', [AuthController::class, 'login'])->name('admin.login.post');
+});
 
 // Logout
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 /*
 |--------------------------------------------------------------------------
-| Customer Account Area (Wajib Login)
+| Customer Account Area (Wajib Login Guard Web)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])->prefix('account')->group(function () {
+Route::middleware(['auth:web'])->prefix('account')->group(function () {
     Route::get('/', [CustomerController::class, 'account'])->name('customer.account');
     Route::post('/update', [CustomerController::class, 'updateAccount'])->name('customer.account.update');
 });
 
 /*
 |--------------------------------------------------------------------------
-| Admin & Cashier Routes (ERP Core Backend)
+| Admin & Cashier Routes (Wajib Login Guard Admin + Role Check)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:admin,cashier'])->prefix('admin')->group(function () {
+Route::middleware(['auth:admin', 'role:admin,cashier'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     
     // Master Data
     Route::resource('materials', MaterialController::class);
     Route::resource('menus', MenuController::class);
 
-    // POS Kasir Toko
+    // POS Kasir Toko & KDS
     Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
     Route::post('/pos', [PosController::class, 'store'])->name('pos.store');
+    Route::get('/pos/active-queue', [PosController::class, 'activeQueue'])->name('pos.active_queue');
+    Route::post('/pos/mark-completed/{id}', [PosController::class, 'markCompleted'])->name('pos.mark_completed');
+    Route::get('/pos/shift-summary', [PosController::class, 'getShiftSummary'])->name('pos.shift_summary');
+    Route::post('/pos/close-shift', [PosController::class, 'closeShift'])->name('pos.close_shift');
+    Route::post('/pos/sync-offline', [PosController::class, 'syncOffline'])->name('pos.sync_offline');
 
     // Pesanan Management
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}/payment-proof', [OrderController::class, 'servePaymentProof'])->name('orders.paymentProof');
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 
     // Keuangan & Arus Kas

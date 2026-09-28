@@ -2,61 +2,78 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller; // <-- Ini yang lu lupa kocak!
-use App\Models\CashFlow; // <-- Ini 'F' nya harus gede sesuai nama Model lu!
+use App\Http\Controllers\Controller;
+use App\Models\CashFlow; 
 use App\Models\Order;
+use App\Traits\FilterableByDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CashFlowController extends Controller
 {
-    public function index()
+    use FilterableByDate;
+
+    public function index(Request $request)
     {
-        // 1. Ambil data cash flow manual
-        $cashFlows = CashFlow::latest()->get();
+        // 0. Resolve Filter Tanggal
+        $dateFilter = $this->resolveDateFilter($request);
 
-        // 2. Hitung Total Inflow & Outflow
-        // Catatan: Model CashFlow lu pake enum 'income'/'expense'
-        $manualInflow = CashFlow::where('type', 'income')->sum('amount');
-        $posInflow = Order::where('invoice_number', 'like', 'NOTTE-POS-%')->sum('total_amount');
+        // 1. Ambil data cash flow murni dengan paginasi & filter tanggal
+        $cashFlowsQuery = CashFlow::latest();
+        $this->applyDateFilter($cashFlowsQuery, $dateFilter, 'created_at');
+        $cashFlows = $cashFlowsQuery->paginate(25)->appends($request->all());
+
+        // 2. Hitung Financial P&L & Enterprise Metrics
+        $effectiveOrders = Order::whereIn('status', ['completed', 'processing']);
+        $this->applyDateFilter($effectiveOrders, $dateFilter, 'created_at');
         
-        $totalInflow = $manualInflow + $posInflow;
-        $totalOutflow = CashFlow::where('type', 'expense')->sum('amount');
-        $netProfit = $totalInflow - $totalOutflow;
+        $totalRevenue = (clone $effectiveOrders)->sum('total_amount');
+        $totalHpp = (clone $effectiveOrders)->selectRaw('SUM(CASE WHEN total_hpp > 0 THEN total_hpp ELSE total_cogs END) as aggregate')->value('aggregate') ?? 0;
+        
+        // 2a. Gross Profit = Revenue - HPP
+        $grossProfit = $totalRevenue - $totalHpp;
 
-        // 3. Data Chart 1: Tren Arus Kas 7 Hari Terakhir
-        $dates = collect();
-        for ($i = 6; $i >= 0; $i--) {
-            $dates->push(now()->subDays($i)->format('Y-m-d'));
-        }
+        // 2b. Opex
+        $opexQuery = CashFlow::whereIn('type', ['expense', 'outflow'])
+            ->where('category', '!=', 'Material Restock')
+            ->where('category', '!=', 'Belanja Bahan Baku');
+        $this->applyDateFilter($opexQuery, $dateFilter, 'created_at');
+        $opex = $opexQuery->sum('amount');
 
-        $chartDates = [];
-        $chartInflows = [];
-        $chartOutflows = [];
+        // 2c. Net Profit = Gross Profit - Opex
+        $netProfit = $grossProfit - $opex;
 
-        foreach ($dates as $date) {
-            $chartDates[] = date('d M', strtotime($date));
-            
-            // Inflow hari ini (POS + Manual 'income')
-            $dayPos = Order::where('invoice_number', 'like', 'NOTTE-POS-%')
-                           ->whereDate('created_at', $date)
-                           ->sum('total_amount');
-            $dayManualIn = CashFlow::where('type', 'income')
-                                   ->whereDate('created_at', $date)
-                                   ->sum('amount');
-            $chartInflows[] = $dayPos + $dayManualIn;
+        // 2d. Omnichannel Breakdown
+        $omnichannelSplit = (clone $effectiveOrders)
+            ->selectRaw('COALESCE(order_source, "pos") as channel, SUM(total_amount) as total_sales, COUNT(*) as order_count')
+            ->groupBy('channel')
+            ->get()
+            ->keyBy('channel');
 
-            // Outflow hari ini ('expense')
-            $chartOutflows[] = CashFlow::where('type', 'expense')
-                                       ->whereDate('created_at', $date)
-                                       ->sum('amount');
-        }
+        // Total Inflow & Outflow murni dari cash_flows
+        $inflowQuery = CashFlow::whereIn('type', ['income', 'inflow']);
+        $this->applyDateFilter($inflowQuery, $dateFilter, 'created_at');
+        $totalInflow = $inflowQuery->sum('amount');
 
-        // 4. Data Chart 2: Breakdown Pengeluaran per Kategori
-        $expenseCategories = CashFlow::select('category', DB::raw('SUM(amount) as total'))
-            ->where('type', 'expense')
-            ->groupBy('category')
-            ->get();
+        $outflowQuery = CashFlow::whereIn('type', ['expense', 'outflow']);
+        $this->applyDateFilter($outflowQuery, $dateFilter, 'created_at');
+        $totalOutflow = $outflowQuery->sum('amount');
+
+        // 3. Data Chart 1: Trend Dinamis berdasarkan Filter Tanggal
+        $chartData = $this->generateChartTrendData(
+            $dateFilter,
+            Order::whereIn('status', ['completed', 'processing']),
+            CashFlow::whereIn('type', ['expense', 'outflow'])
+        );
+        $chartDates = $chartData['labels'];
+        $chartInflows = $chartData['revenues'];
+        $chartOutflows = $chartData['expenses'];
+
+        // 4. Data Chart 2: Breakdown Pengeluaran per Kategori (dengan Filter Tanggal)
+        $expenseCategoriesQuery = CashFlow::select('category', DB::raw('SUM(amount) as total'))
+            ->whereIn('type', ['expense', 'outflow']);
+        $this->applyDateFilter($expenseCategoriesQuery, $dateFilter, 'created_at');
+        $expenseCategories = $expenseCategoriesQuery->groupBy('category')->get();
 
         $catLabels = $expenseCategories->pluck('category')->toArray();
         $catTotals = $expenseCategories->pluck('total')->toArray();
@@ -67,15 +84,15 @@ class CashFlowController extends Controller
         }
 
         return view('admin.cash_flows.index', compact(
-            'cashFlows', 'totalInflow', 'totalOutflow', 'netProfit',
+            'cashFlows', 'totalInflow', 'totalOutflow', 'totalRevenue', 'totalHpp', 
+            'grossProfit', 'opex', 'netProfit', 'omnichannelSplit',
             'chartDates', 'chartInflows', 'chartOutflows',
-            'catLabels', 'catTotals'
+            'catLabels', 'catTotals', 'dateFilter'
         ));
     }
 
     public function store(Request $request)
     {
-        // Validasi nerima format form lu
         $request->validate([
             'type'        => 'required|in:Outflow,Inflow',
             'category'    => 'required|string|max:255',
@@ -83,12 +100,13 @@ class CashFlowController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        // Mapping dari dropdown form ('Inflow'/'Outflow') ke Enum Database ('income'/'expense')
+        // Standarisasi jadi huruf kecil (inflow / outflow) biar seragam di DB
         CashFlow::create([
-            'type'        => $request->type === 'Outflow' ? 'expense' : 'income',
+            'type'        => strtolower($request->type),
             'category'    => $request->category,
             'amount'      => $request->amount,
             'description' => $request->description,
+            'date'        => now()->toDateString(), 
         ]);
 
         return redirect()->back()->with('success', 'Transaksi arus kas berhasil dicatat!');

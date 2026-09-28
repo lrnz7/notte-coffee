@@ -9,12 +9,12 @@ class CrmController extends Controller
 {
     public function index()
     {
-        // Ambil semua customer beserta relasi orders untuk hitung LTV (Lifetime Value)
+        // Ambil semua customer beserta relasi orders untuk hitung LTV (Lifetime Value) dengan pagination
         $customers = User::where('role', 'customer')
             ->withCount('orders')
             ->withSum('orders as total_spent', 'total_amount')
             ->orderBy('total_spent', 'desc')
-            ->get();
+            ->paginate(25);
             
         return view('admin.crm.index', compact('customers'));
     }

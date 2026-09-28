@@ -13,7 +13,7 @@ class AuthController extends Controller
     // --- STAFF / ERP AUTH ---
     public function showLogin()
     {
-        return view('auth.login'); // Halaman login ERP Admin bawaan
+        return view('auth.login'); 
     }
 
     public function login(Request $request)
@@ -23,15 +23,19 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-
-            $role = Auth::user()->role;
-            if ($role === 'admin' || $role === 'cashier') {
+        // Gunakan guard 'admin'
+        if (Auth::guard('admin')->attempt($credentials)) {
+            $role = Auth::guard('admin')->user()->role;
+            
+            // Validasi ketat: Hanya admin/cashier yang boleh masuk lewat guard ini
+            if (in_array($role, ['admin', 'cashier'])) {
+                $request->session()->regenerate();
                 return redirect()->intended(route('admin.dashboard'));
             }
-
-            return redirect()->route('home');
+            
+            // Jika customer nyasar login di halaman admin, tendang keluar
+            Auth::guard('admin')->logout();
+            return back()->withErrors(['email' => 'Akses ditolak. Anda bukan staff.'])->onlyInput('email');
         }
 
         return back()->withErrors(['email' => 'Email atau password salah!'])->onlyInput('email');
@@ -40,7 +44,7 @@ class AuthController extends Controller
     // --- CUSTOMER AUTH ---
     public function showCustomerLogin()
     {
-        return view('customer.auth'); // Halaman Login & Register khusus Customer
+        return view('customer.auth'); 
     }
 
     public function customerLogin(Request $request)
@@ -50,9 +54,19 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            return redirect()->route('customer.account')->with('success', 'Berhasil masuk!');
+        // Gunakan guard 'web' (default) untuk customer
+        if (Auth::guard('web')->attempt($credentials)) {
+            $role = Auth::guard('web')->user()->role;
+            
+            // Validasi ketat: Hanya customer yang boleh masuk lewat guard ini
+            if ($role === 'customer') {
+                $request->session()->regenerate();
+                return redirect()->route('customer.account')->with('success', 'Berhasil masuk!');
+            }
+            
+            // Jika admin nyasar login di halaman customer frontend, tendang keluar
+            Auth::guard('web')->logout();
+            return back()->withErrors(['login_email' => 'Akun staff tidak bisa digunakan di sini. Silakan login di portal ERP.'])->onlyInput('email');
         }
 
         return back()->withErrors(['login_email' => 'Email atau password salah!'])->onlyInput('email');
@@ -85,7 +99,8 @@ class AuthController extends Controller
                 'has_claimed_welcome_discount' => false,
             ]);
 
-            Auth::login($user);
+            // Login spesifik ke guard web
+            Auth::guard('web')->login($user);
 
             return redirect()->route('customer.menu')->with('success', 'Akun berhasil dibuat! Diskon 50% pesanan pertama Anda sudah aktif.');
         } catch (\Exception $e) {
@@ -95,7 +110,14 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        // Logout dari kedua guard untuk memastikan keamanan bersih
+        if (Auth::guard('admin')->check()) {
+            Auth::guard('admin')->logout();
+        }
+        if (Auth::guard('web')->check()) {
+            Auth::guard('web')->logout();
+        }
+        
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

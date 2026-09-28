@@ -689,7 +689,7 @@
                         if (!bar) return;
 
                         if (status === 'completed') {
-                            textEl.innerText = "Pesanan Selesai! Silakan ambil, atau admin akan menghubungi WA lu.";
+                            textEl.innerText = "Pesanan Selesai! Silakan ambil di tenant secara langsung!.";
                             bar.classList.add('border-emerald-500', 'shadow-[0_0_30px_rgba(16,185,129,0.2)]');
                             bar.classList.remove('border-[#c5a880]/60');
                             if(dot && solidDot) {
@@ -698,7 +698,7 @@
                             }
                             clearInterval(pollingInterval);
                         } else if (status === 'processing') {
-                            textEl.innerText = "Pesanan lu sedang diracik oleh Barista kami ☕";
+                            textEl.innerText = "Pesanan kamu sedang diracik oleh Barista kami";
                             if(dot && solidDot) {
                                 dot.classList.replace('bg-[#c5a880]', 'bg-blue-500');
                                 solidDot.classList.replace('bg-[#c5a880]', 'bg-blue-500');

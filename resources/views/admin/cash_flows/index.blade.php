@@ -14,6 +14,9 @@
         </button>
     </div>
 
+    <!-- DYNAMIC TIME-RANGE FILTER -->
+    @include('admin.partials.date_filter')
+
     <!-- MODAL INPUT KAS MANUAL -->
     <div x-show="showModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
         <div class="bg-white rounded-lg w-full max-w-md p-6 shadow-xl relative" @click.away="showModal = false">
@@ -48,24 +51,58 @@
         </div>
     </div>
 
-    <!-- STAT CARDS -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Total Pemasukan (Inflow)</span>
-            <h3 class="text-2xl font-black text-emerald-600">Rp{{ number_format($totalInflow, 0, ',', '.') }}</h3>
-            <p class="text-[11px] text-gray-400 mt-1">Akumulasi POS Kasir & Inflow Manual</p>
+    <!-- ENTERPRISE FINANCIAL P&L & OMNICHANNEL METRIC CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <!-- Card 1: Gross Profit -->
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div class="flex items-center justify-between text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <span>Gross Profit</span>
+            </div>
+            <h3 class="text-2xl font-black text-emerald-600 mt-2">Rp{{ number_format($grossProfit, 0, ',', '.') }}</h3>
+            <p class="text-[11px] text-gray-500 mt-1">
+                Omzet (Rp{{ number_format($totalRevenue, 0, ',', '.') }}) - HPP (Rp{{ number_format($totalHpp, 0, ',', '.') }})
+            </p>
         </div>
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Total Pengeluaran (Outflow)</span>
-            <h3 class="text-2xl font-black text-rose-600">Rp{{ number_format($totalOutflow, 0, ',', '.') }}</h3>
-            <p class="text-[11px] text-gray-400 mt-1">Bahan baku & operasional</p>
+
+        <!-- Card 2: Operational Expenditure (Opex) -->
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div class="flex items-center justify-between text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <span>Pengeluaran</span>
+            </div>
+            <h3 class="text-2xl font-black text-rose-600 mt-2">Rp{{ number_format($opex, 0, ',', '.') }}</h3>
+            <p class="text-[11px] text-gray-500 mt-1">Biaya Operasional (Non-Bahan Baku)</p>
         </div>
-        <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Laba Bersih Kas (Net Cash)</span>
-            <h3 class="text-2xl font-black {{ $netProfit >= 0 ? 'text-amber-500' : 'text-red-600' }}">
+
+        <!-- Card 3: Net Profit -->
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div class="flex items-center justify-between text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <span>Net Profit</span>
+            </div>
+            <h3 class="text-2xl font-black {{ $netProfit >= 0 ? 'text-blue-600' : 'text-rose-700' }} mt-2">
                 Rp{{ number_format($netProfit, 0, ',', '.') }}
             </h3>
-            <p class="text-[11px] text-gray-400 mt-1">Pemasukan dikurangi Pengeluaran</p>
+            <p class="text-[11px] text-gray-500 mt-1">Laba Kotor - Operasional</p>
+        </div>
+
+        <!-- Card 4: Omnichannel Sales Breakdown -->
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+            <div class="flex items-center justify-between text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                <span>Penjualan</span>
+            </div>
+            <div class="space-y-1 text-xs">
+                <div class="flex justify-between items-center">
+                    <span class="font-medium text-gray-600">POS (Offline Store):</span>
+                    <span class="font-bold text-gray-800">Rp{{ number_format($omnichannelSplit->get('pos')->total_sales ?? 0, 0, ',', '.') }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="font-medium text-gray-600">Online Web:</span>
+                    <span class="font-bold text-gray-800">Rp{{ number_format($omnichannelSplit->get('online')->total_sales ?? 0, 0, ',', '.') }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="font-medium text-gray-600">Event TFEST:</span>
+                    <span class="font-bold text-gray-800">Rp{{ number_format($omnichannelSplit->get('tfest_2026')->total_sales ?? 0, 0, ',', '.') }}</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -92,7 +129,7 @@
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
             <h3 class="font-bold text-gray-800 text-sm">Riwayat Transaksi Kas Manual</h3>
-            <span class="text-xs text-gray-500">Total {{ count($cashFlows) }} Catatan</span>
+            <span class="text-xs text-gray-500">Total {{ $cashFlows->total() }} Catatan</span>
         </div>
         <table class="w-full text-left border-collapse">
             <thead>
@@ -128,6 +165,12 @@
                 @endforelse
             </tbody>
         </table>
+
+        @if($cashFlows->hasPages())
+        <div class="p-4 border-t border-gray-100 bg-gray-50">
+            {{ $cashFlows->links() }}
+        </div>
+        @endif
     </div>
 </div>
 

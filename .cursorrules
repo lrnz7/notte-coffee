@@ -1,0 +1,12 @@
+UI_DESIGN_GUARDRAILS:
+  STRICT_RULES:
+    - NO_EMOJIS: Never use emojis in UI labels, headers, cards, or status badges.
+    - MAX_BORDER_RADIUS: Standardize all components to `rounded-md` or `rounded`. Strictly BAN `rounded-2xl`, `rounded-3xl`, and `rounded-full` (except avatar images).
+    - COLOR_PALETTE:
+        - Primary: Monochromatic / Slate / Zinc / Dark Utility (`bg-gray-900`, `text-gray-800`).
+        - Accent: Max 1 accent color (`emerald` or `indigo`).
+        - BAN: Multi-color pastel badges (e.g., mixing `bg-emerald-50`, `bg-rose-50`, `bg-amber-50` side by side).
+    - TYPOGRAPHY:
+        - Remove redundant subtitle/fluff text under headings.
+        - Use `font-mono` for metrics/codes and standard `font-sans` for labels.
+    - ANIMATIONS: BAN `animate-pulse` or heavy pulse indicators on static status items.
