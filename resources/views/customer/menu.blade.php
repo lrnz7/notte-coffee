@@ -38,7 +38,7 @@
 
     <!-- FLOATING LIVE TRACKER -->
     @if(session('active_invoice'))
-    <div id="live-tracker-bar" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[90%] max-w-lg bg-[#121212]/95 backdrop-blur-md border border-[#c5a880]/60 p-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex items-center justify-between gap-4">
+    <div id="live-tracker-bar" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[90%] max-w-lg bg-[#121212]/95 backdrop-blur-md border border-[#c5a880]/60 p-4 rounded-md shadow-lg flex items-center justify-between gap-4">
         <div class="flex items-center gap-3">
             <span class="relative flex h-3 w-3">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c5a880] opacity-75"></span>
@@ -50,7 +50,7 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <a href="{{ route('customer.order.track', session('active_invoice')) }}" class="bg-[#c5a880] text-black font-extrabold text-[10px] px-4 py-2 rounded-full uppercase tracking-wider">
+            <a href="{{ route('customer.order.track', session('active_invoice')) }}" class="bg-[#c5a880] text-black font-extrabold text-[10px] px-4 py-2 rounded-md uppercase tracking-wider">
                 Struk →
             </a>
             <button onclick="closeTracker()" class="text-gray-400 font-bold px-1 text-sm">✕</button>
@@ -59,7 +59,7 @@
     @endif
 
     <!-- TOAST NOTIFICATION -->
-    <div id="toast-notification" class="fixed top-24 right-6 z-[60] transform translate-x-[150%] opacity-0 transition-all duration-500 ease-out bg-notte-card border border-notte-gold text-gray-200 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4">
+    <div id="toast-notification" class="fixed top-24 right-6 z-[60] transform translate-x-[150%] opacity-0 transition-all duration-500 ease-out bg-notte-card border border-notte-gold text-gray-200 px-6 py-4 rounded-md shadow-sm flex items-center gap-4">
         <span class="text-notte-gold text-xl">✦</span>
         <div>
             <p class="text-[10px] font-bold uppercase tracking-widest text-notte-gold">Berhasil</p>
@@ -69,7 +69,7 @@
 
     <!-- ERROR ALERTS DARI CONTROLLER -->
     @if(session('error'))
-        <div class="fixed top-24 left-1/2 -translate-x-1/2 z-[70] w-full max-w-md bg-rose-950/90 backdrop-blur-sm border border-rose-800/60 text-rose-200 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3">
+        <div class="fixed top-24 left-1/2 -translate-x-1/2 z-[70] w-full max-w-md bg-rose-950/90 backdrop-blur-sm border border-rose-800/60 text-rose-200 px-6 py-4 rounded-md shadow-sm flex items-center gap-3">
             <span class="text-rose-400 text-lg">⚠</span>
             <div class="flex-1">
                 <p class="text-[10px] font-bold uppercase tracking-wider text-rose-400">Gagal Memproses Pesanan</p>
@@ -102,11 +102,11 @@
                 @auth
                     @if(Auth::user()->role === 'customer')
                         <a href="{{ route('customer.account') }}" class="border border-notte-gold text-notte-gold hover:bg-notte-gold hover:text-black font-bold text-[11px] px-5 py-2 rounded-full transition uppercase tracking-widest flex items-center gap-2">
-                            <span>👤 {{ Str::limit(Auth::user()->name, 10) }}</span>
+                            <span>{{ Str::limit(Auth::user()->name, 10) }}</span>
                         </a>
                     @else
                         <a href="{{ route('admin.dashboard') }}" class="bg-rose-900/80 text-rose-200 border border-rose-700 font-bold text-[11px] px-4 py-2 rounded-full transition uppercase tracking-widest">
-                            🛡 Panel ERP
+                            Panel ERP
                         </a>
                     @endif
                 @else
@@ -129,17 +129,17 @@
         </div>
 
         <div class="flex justify-center items-center gap-3 mb-12 flex-wrap">
-            <button onclick="filterCategory('all')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full bg-notte-gold text-black uppercase tracking-wider">Semua Menu</button>
-            <button onclick="filterCategory('Coffee')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">Coffee</button>
-            <button onclick="filterCategory('1 Liter')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">1 Liter</button>
-            <button onclick="filterCategory('Non-Coffee')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">Food</button>
-            <button onclick="filterCategory('Food')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">Food</button>
-            <button onclick="filterCategory('Dessert')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-full border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">Dessert</button>
+            <button onclick="filterCategory('all')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-md bg-notte-gold text-black uppercase tracking-wider">Semua Menu</button>
+            <button onclick="filterCategory('Coffee')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-md border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">Coffee</button>
+            <button onclick="filterCategory('1 Liter')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-md border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">1 Liter</button>
+            <button onclick="filterCategory('Non-Coffee')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-md border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">Food</button>
+            <button onclick="filterCategory('Food')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-md border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">Food</button>
+            <button onclick="filterCategory('Dessert')" class="category-btn text-xs font-bold px-6 py-2.5 rounded-md border border-neutral-800 text-gray-400 hover:text-notte-gold uppercase tracking-wider">Dessert</button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @forelse ($menus as $menu)
-            <div class="menu-card bg-notte-card border border-neutral-800/80 group flex flex-col justify-between overflow-hidden rounded-2xl hover:border-notte-gold/40 transition-all" data-category="{{ $menu->category }}">
+            <div class="menu-card bg-notte-card border border-neutral-800/80 group flex flex-col justify-between overflow-hidden rounded-lg hover:border-notte-gold/40 transition-all" data-category="{{ $menu->category }}">
                 <div class="aspect-[4/5] overflow-hidden relative bg-neutral-900">
                     <img src="{{ $menu->image ?? 'https://images.unsplash.com/photo-1550461716-bf9173208941?q=80&w=600' }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700 opacity-90">
                     <div class="absolute inset-0 bg-gradient-to-t from-notte-card via-transparent to-transparent opacity-80"></div>
@@ -153,9 +153,9 @@
                     <div class="pt-4 border-t border-neutral-800/80 flex justify-between items-center mt-auto">
                         <span class="font-serif-title text-xl text-gray-200">Rp{{ number_format($menu->selling_price, 0, ',', '.') }}</span>
                         @if(in_array($menu->category, ['1 Liter', 'Food', 'Dessert']))
-                            <button onclick="addDirectToCart({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{$menu->selling_price }})" class="text-xs font-bold bg-notte-gold/10 text-notte-gold border border-notte-gold px-5 py-2.5 rounded-full uppercase">Tambahkan</button>
+                            <button onclick="addDirectToCart({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{$menu->selling_price }})" class="text-xs font-bold bg-notte-gold/10 text-notte-gold border border-notte-gold px-5 py-2.5 rounded-md uppercase">Tambahkan</button>
                         @else
-                            <button onclick="openModifierModal({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{$menu->selling_price }})" class="text-xs font-bold border border-neutral-700 text-gray-300 hover:text-notte-gold px-5 py-2.5 rounded-full uppercase">Pilih Varian</button>
+                            <button onclick="openModifierModal({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{$menu->selling_price }})" class="text-xs font-bold border border-neutral-700 text-gray-300 hover:text-notte-gold px-5 py-2.5 rounded-md uppercase">Pilih Varian</button>
                         @endif
                     </div>
                 </div>
@@ -168,7 +168,7 @@
 
     <!-- MODAL MODIFIER -->
     <div id="modifier-modal" class="fixed inset-0 bg-notte-black/90 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-notte-card border border-neutral-800 w-full max-w-md p-8 rounded-2xl shadow-2xl space-y-6">
+        <div class="bg-notte-card border border-neutral-800 w-full max-w-md p-8 rounded-lg shadow-sm space-y-6">
             <div class="flex justify-between items-center border-b border-neutral-800 pb-4">
                 <div>
                     <span class="text-[10px] font-mono uppercase text-notte-gold block">Custom Order</span>
@@ -200,7 +200,7 @@
             </div>
             <div class="border-t border-neutral-800 pt-6 flex justify-between items-center">
                 <span id="modal-menu-price" class="font-serif-title text-xl text-notte-gold">Rp0</span>
-                <button type="button" onclick="confirmAddToCart()" class="bg-notte-gold text-black font-extrabold text-xs uppercase px-6 py-3.5 rounded-full">Masukkan Keranjang</button>
+                <button type="button" onclick="confirmAddToCart()" class="bg-notte-gold text-black font-extrabold text-xs uppercase px-6 py-3.5 rounded-md">Masukkan Keranjang</button>
             </div>
         </div>
     </div>
@@ -233,7 +233,7 @@
                         </div>
 
                         <!-- FIELD ALAMAT & PETA INTERAKTIF -->
-                        <div id="address-field" class="space-y-3 relative bg-neutral-900/50 p-3 rounded-xl border border-neutral-800">
+                        <div id="address-field" class="space-y-3 relative bg-neutral-900/50 p-3 rounded-md border border-neutral-800">
                             
                             <!-- Header Peta & Tombol GPS -->
                             <div class="flex justify-between items-center mb-1">
@@ -251,7 +251,7 @@
                                 <textarea name="shipping_address" id="shipping_address" rows="2" placeholder="Geser pin di peta, klik Deteksi GPS, atau ketik alamat lu..." oninput="handleAddressInput()" class="w-full bg-notte-black border border-neutral-700 p-3 rounded-lg text-xs text-gray-200 focus:border-notte-gold outline-none">{{ Auth::check() ? Auth::user()->address : '' }}</textarea>
                                 
                                 <!-- DROPDOWN SUGGESTION ALAMAT -->
-                                <div id="address-suggestions" class="hidden absolute left-0 right-0 top-[100%] mt-1 bg-[#1a1a1a] border border-neutral-700 rounded-lg shadow-2xl z-50 max-h-48 overflow-y-auto divide-y divide-neutral-800"></div>
+                                <div id="address-suggestions" class="hidden absolute left-0 right-0 top-[100%] mt-1 bg-[#1a1a1a] border border-neutral-700 rounded-md shadow-sm z-50 max-h-48 overflow-y-auto divide-y divide-neutral-800"></div>
                             </div>
 
                             <!-- Indikator Jarak -->
@@ -271,14 +271,14 @@
                 </div>
 
                 <div id="checkout-action-container">
-                    <button type="submit" id="submit-checkout-btn" form="checkout-form" class="w-full bg-notte-gold text-black font-extrabold text-xs tracking-widest uppercase py-4 rounded-full shadow-lg">Konfirmasi Checkout</button>
+                    <button type="submit" id="submit-checkout-btn" form="checkout-form" class="w-full bg-notte-gold text-black font-extrabold text-xs tracking-widest uppercase py-4 rounded-md">Konfirmasi Checkout</button>
 
                     <!-- TOMBOL SHOPEEFOOD HYBRID -->
                     <a id="shopeefood-btn" 
                        onclick="openShopeeFood(event)"
                        href="https://shopee.co.id/universal-link/now-food/shop/23386724?deep_and_deferred=1&shareChannel=whatsapp" 
                        target="_blank" 
-                       class="hidden w-full bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-xs tracking-widest uppercase py-4 rounded-full text-center flex items-center justify-center gap-2 shadow-lg cursor-pointer">
+                       class="hidden w-full bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-xs tracking-widest uppercase py-4 rounded-md text-center flex items-center justify-center gap-2 cursor-pointer">
                         <span>Pesan via ShopeeFood</span>
                     </a>
                 </div>
@@ -288,7 +288,7 @@
 
     <!-- MODAL POP-UP KHUSUS PC SHOPEEFOOD -->
     <div id="shopeefood-pc-modal" class="fixed inset-0 bg-notte-black/90 backdrop-blur-sm z-[80] hidden flex items-center justify-center p-4">
-        <div class="bg-notte-card border border-notte-gold/60 w-full max-w-sm p-6 rounded-2xl shadow-2xl space-y-4 text-center">
+        <div class="bg-notte-card border border-notte-gold/60 w-full max-w-sm p-6 rounded-lg shadow-sm space-y-4 text-center">
             <div>
                 <span class="text-[10px] font-mono uppercase tracking-widest text-notte-gold block mb-1">Pemberitahuan ShopeeFood</span>
                 <h3 class="font-serif-title text-xl font-bold text-gray-100">Khusus Aplikasi HP</h3>
@@ -297,7 +297,7 @@
                 Layanan ShopeeFood cuma bisa dipesan lewat aplikasi Shopee di HP kamu!
             </p>
             <div class="pt-2 border-t border-neutral-800 space-y-2">
-                <button type="button" onclick="document.getElementById('shopeefood-pc-modal').classList.add('hidden')" class="w-full bg-notte-gold text-black font-extrabold text-xs uppercase tracking-widest py-3 rounded-full hover:bg-amber-600 transition">
+                <button type="button" onclick="document.getElementById('shopeefood-pc-modal').classList.add('hidden')" class="w-full bg-notte-gold text-black font-extrabold text-xs uppercase tracking-widest py-3 rounded-md hover:bg-amber-600 transition">
                     Oke
                 </button>
             </div>

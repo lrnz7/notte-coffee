@@ -14,17 +14,17 @@
             <!-- Left: Network status & Offline queue badge -->
             <div class="flex items-center gap-2">
                 <!-- Status Network Pill -->
-                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border"
-                     :class="isOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'">
-                    <span class="w-2 h-2 rounded-full"
-                          :class="isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></span>
+                <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold border"
+                     :class="isOnline ? 'bg-slate-900 text-white border-slate-900' : 'bg-gray-100 text-gray-800 border-gray-400'">
+                    <span class="w-1.5 h-1.5 rounded-sm"
+                          :class="isOnline ? 'bg-emerald-400' : 'bg-gray-500'"></span>
                     <span x-text="isOnline ? 'ONLINE' : 'OFFLINE MODE'"></span>
                 </div>
 
                 <!-- Pending Offline Count Badge -->
                 <template x-if="pendingOfflineCount > 0">
-                    <span class="bg-amber-100 border border-amber-300 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 animate-bounce">
-                        ⚡ <span x-text="pendingOfflineCount"></span> Belum Sync
+                    <span class="bg-gray-900 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <span x-text="pendingOfflineCount"></span> Belum Sync
                     </span>
                 </template>
             </div>
@@ -39,7 +39,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                     </svg>
                     <span x-text="isSyncing ? 'Syncing...' : 'Sync Offline'"></span>
-                    <span x-show="pendingOfflineCount > 0" class="bg-amber-500 text-slate-900 font-black text-[9px] px-1.5 py-0.2 rounded-full" x-text="pendingOfflineCount"></span>
+                    <span x-show="pendingOfflineCount > 0" class="bg-slate-700 text-white font-black text-[9px] px-1.5 py-0.5 rounded-sm" x-text="pendingOfflineCount"></span>
                 </button>
 
                 <!-- Tutup Kasir / Closing Shift Button -->
@@ -57,7 +57,7 @@
         <div class="bg-slate-900 p-3 md:p-4 shadow-md text-white mb-3 md:rounded-lg shrink-0 w-full relative z-10">
             <div class="flex justify-between items-center mb-2.5">
                 <h3 class="font-bold text-xs md:text-sm tracking-wide flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span class="w-2 h-2 rounded-sm bg-amber-500"></span>
                     DAPUR (AKTIF: <span x-text="activeOrders.length"></span>/5)
                 </h3>
             </div>
@@ -174,7 +174,6 @@
             <div class="flex-1 overflow-y-auto space-y-2.5 pr-1 border-t border-gray-200 pt-3">
                 <template x-if="cart.length === 0">
                     <div class="text-center py-12 text-gray-400 flex flex-col items-center">
-                        <span class="text-4xl mb-2 opacity-50">🛒</span>
                         <p class="text-[11px] font-bold">Keranjang masih kosong</p>
                     </div>
                 </template>
@@ -218,7 +217,7 @@
 
                 <button @click="processPayment()" :disabled="cart.length === 0 || loading" class="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-gray-300 text-white font-black py-4 rounded-lg text-sm uppercase tracking-widest shadow-lg active:scale-[0.98] transition flex justify-center items-center space-x-2">
                     <span x-show="!loading" x-text="isOnline ? 'PROSES PEMBAYARAN' : 'SIMPAN OFFLINE (LOKAL)'"></span>
-                    <span x-show="loading" class="animate-pulse">MEMPROSES...</span>
+                    <span x-show="loading">MEMPROSES...</span>
                 </button>
             </div>
         </div>
@@ -239,7 +238,6 @@
             <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-slate-900 text-white">
                 <div>
                     <h3 class="text-base font-bold">Riwayat Transaksi</h3>
-                    <p class="text-[10px] text-gray-300">20 Transaksi Terakhir</p>
                 </div>
                 <button @click="showHistory = false" class="text-gray-300 hover:text-white font-bold text-2xl">&times;</button>
             </div>
@@ -287,7 +285,7 @@
     <div x-show="showClosingModal" style="display: none;" class="fixed inset-0 z-[120] flex items-center justify-center p-3 md:p-6">
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="if(!closingLoading) showClosingModal = false"></div>
         
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden flex flex-col max-h-[90vh]"
+        <div class="bg-white rounded-md shadow-2xl w-full max-w-lg relative z-10 overflow-hidden flex flex-col max-h-[90vh]"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100">
@@ -295,12 +293,8 @@
             <!-- Modal Header -->
             <div class="bg-slate-900 text-white p-4 md:p-5 flex justify-between items-center border-b border-slate-800">
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-lg">
-                        💼
-                    </div>
                     <div>
                         <h3 class="text-base font-black tracking-wide">Closing Shift Kasir</h3>
-                        <p class="text-[11px] text-gray-400">Rekonsiliasi Uang Fisik vs Penjualan Sistem</p>
                     </div>
                 </div>
                 <button @click="showClosingModal = false" class="text-gray-400 hover:text-white font-bold text-2xl leading-none">&times;</button>
@@ -313,7 +307,7 @@
                 <template x-if="!closingSuccessData">
                     <div class="space-y-4">
                         <!-- Shift Meta Pill -->
-                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center text-xs">
+                        <div class="bg-slate-50 border border-slate-200 rounded-md p-3 flex justify-between items-center text-xs">
                             <div>
                                 <span class="text-gray-500 font-semibold text-[10px] block">KASIR BERTUGAS</span>
                                 <span class="font-bold text-slate-800" x-text="shiftSummary.cashier_name || 'Kasir NOTTE'"></span>
@@ -326,13 +320,13 @@
 
                         <!-- System Sales Summary Card -->
                         <div class="grid grid-cols-2 gap-2.5">
-                            <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-3">
-                                <span class="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">Penjualan Kas (Sistem)</span>
-                                <span class="text-base font-black text-amber-900 font-mono" x-text="formatRupiah(shiftSummary.system_cash_sales || 0)"></span>
+                            <div class="bg-white border border-gray-200 rounded-md p-3">
+                                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Penjualan Kas (Sistem)</span>
+                                <span class="text-base font-black text-gray-900 font-mono" x-text="formatRupiah(shiftSummary.system_cash_sales || 0)"></span>
                             </div>
-                            <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-3">
-                                <span class="text-[10px] font-bold text-blue-800 uppercase tracking-wider block">Penjualan QRIS (Sistem)</span>
-                                <span class="text-base font-black text-blue-900 font-mono" x-text="formatRupiah(shiftSummary.system_qris_sales || 0)"></span>
+                            <div class="bg-white border border-gray-200 rounded-md p-3">
+                                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Penjualan QRIS (Sistem)</span>
+                                <span class="text-base font-black text-gray-900 font-mono" x-text="formatRupiah(shiftSummary.system_qris_sales || 0)"></span>
                             </div>
                         </div>
 
@@ -370,17 +364,17 @@
                         </div>
 
                         <!-- LIVE RECONCILIATION RESULT BOX -->
-                        <div class="rounded-xl border p-4 transition"
+                        <div class="rounded-md border p-4 transition"
                              :class="{
-                                 'bg-emerald-50 border-emerald-300 text-emerald-900': calculatedDiff === 0,
-                                 'bg-rose-50 border-rose-300 text-rose-900': calculatedDiff < 0,
-                                 'bg-sky-50 border-sky-300 text-sky-900': calculatedDiff > 0
+                                 'bg-white border-gray-300 text-gray-900': calculatedDiff === 0,
+                                 'bg-white border-gray-400 text-gray-900': calculatedDiff < 0,
+                                 'bg-white border-gray-300 text-gray-900': calculatedDiff > 0
                              }">
                             <div class="flex justify-between items-center text-xs font-semibold mb-1.5">
                                 <span>Kas Seharusnya (Modal Awal + Penjualan Kas):</span>
                                 <span class="font-mono font-bold" x-text="formatRupiah(expectedCashInDrawer)"></span>
                             </div>
-                            <div class="flex justify-between items-center text-xs font-semibold mb-2 pb-2 border-b border-gray-200/50">
+                            <div class="flex justify-between items-center text-xs font-semibold mb-2 pb-2 border-b border-gray-200">
                                 <span>Total Uang Fisik Terhitung:</span>
                                 <span class="font-mono font-bold" x-text="formatRupiah(closingForm.physical_cash_count || 0)"></span>
                             </div>
@@ -389,7 +383,7 @@
                                 <div>
                                     <span class="text-[10px] font-black uppercase tracking-wider block">Status Rekonsiliasi:</span>
                                     <span class="text-sm font-black uppercase tracking-wide"
-                                          x-text="calculatedDiff === 0 ? '✓ MATCH / LENGKAP' : (calculatedDiff < 0 ? '⚠ TEKOR (SHORTAGE)' : '★ SURPLUS (LEBIH)')"></span>
+                                          x-text="calculatedDiff === 0 ? 'MATCH' : (calculatedDiff < 0 ? 'SHORTAGE' : 'SURPLUS')"></span>
                                 </div>
                                 <div class="text-right">
                                     <span class="text-[10px] font-black uppercase tracking-wider block">Selisih Kas:</span>
@@ -404,14 +398,10 @@
                 <!-- View Mode: CLOSING SUCCESS RECEIPT -->
                 <template x-if="closingSuccessData">
                     <div class="space-y-4 text-center py-2" id="closing-receipt-area">
-                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-1">
-                            ✓
-                        </div>
-                        <h4 class="text-lg font-black text-slate-800">Closing Shift Selesai!</h4>
-                        <p class="text-xs text-gray-500">Data telah tercatat permanen di Database & Jurnal Arus Kas.</p>
+                        <h4 class="text-lg font-black text-slate-800">Closing Shift Selesai</h4>
 
                         <!-- Struk Ringkasan Closing -->
-                        <div class="bg-gray-50 border border-gray-300 rounded-xl p-4 text-left font-mono text-xs space-y-2 max-w-sm mx-auto shadow-inner">
+                        <div class="bg-gray-50 border border-gray-300 rounded-md p-4 text-left font-mono text-xs space-y-2 max-w-sm mx-auto shadow-inner">
                             <div class="text-center pb-2 border-b border-dashed border-gray-300">
                                 <h5 class="font-black text-sm text-slate-900">NOTTE COFFEE</h5>
                                 <p class="text-[10px] text-gray-500">STRUK PENUTUPAN SHIFT KASIR</p>
@@ -457,15 +447,15 @@
                     <div class="flex gap-2 w-full justify-end">
                         <button type="button" 
                                 @click="showClosingModal = false" 
-                                class="px-4 py-2 text-xs font-bold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition">
+                                class="px-4 py-2 text-xs font-bold text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-100 active:bg-gray-200 transition">
                             Batal
                         </button>
                         <button type="button" 
                                 @click="submitClosingShift()" 
                                 :disabled="closingLoading"
-                                class="px-5 py-2 text-xs font-extrabold text-slate-900 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 rounded-lg shadow transition flex items-center gap-1.5">
+                                class="px-5 py-2 text-xs font-extrabold text-slate-900 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 rounded-md shadow transition flex items-center gap-1.5">
                             <span x-show="!closingLoading">SIMPAN & CLOSING</span>
-                            <span x-show="closingLoading" class="animate-pulse">MENYIMPAN...</span>
+                            <span x-show="closingLoading">MENYIMPAN...</span>
                         </button>
                     </div>
                 </template>
@@ -474,12 +464,12 @@
                     <div class="flex gap-2 w-full justify-end">
                         <button type="button" 
                                 @click="window.print()" 
-                                class="px-4 py-2 text-xs font-bold text-slate-800 bg-slate-200 hover:bg-slate-300 rounded-lg transition flex items-center gap-1">
-                            🖨️ Cetak Struk
+                                class="px-4 py-2 text-xs font-bold text-slate-800 bg-slate-200 hover:bg-slate-300 rounded-md transition flex items-center gap-1">
+                            Cetak Struk
                         </button>
                         <button type="button" 
                                 @click="showClosingModal = false; closingSuccessData = null;" 
-                                class="px-5 py-2 text-xs font-black text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition">
+                                class="px-5 py-2 text-xs font-black text-white bg-slate-900 hover:bg-slate-800 rounded-md transition">
                             Selesai & Tutup
                         </button>
                     </div>

@@ -38,9 +38,9 @@
 
             <!-- Cart Trigger Button -->
             <div class="flex items-center space-x-4">
-                <button onclick="toggleCart()" class="relative bg-notte-gold hover:bg-amber-600 text-black font-extrabold text-[11px] px-6 py-2.5 rounded-full transition uppercase tracking-widest flex items-center gap-2 shadow-lg">
+                <button onclick="toggleCart()" class="relative bg-notte-gold hover:bg-amber-600 text-black font-extrabold text-[11px] px-6 py-2.5 rounded-md transition uppercase tracking-widest flex items-center gap-2">
                     <span>Keranjang</span>
-                    <span id="cart-count" class="bg-black text-notte-gold text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-mono">0</span>
+                    <span id="cart-count" class="bg-black text-notte-gold text-[10px] w-5 h-5 rounded-sm flex items-center justify-center font-mono">0</span>
                 </button>
             </div>
         </div>
@@ -58,7 +58,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @forelse ($menus as$menu)
-            <div class="bg-notte-card border border-neutral-800/80 group flex flex-col justify-between hover:border-notte-gold/50 transition duration-500 overflow-hidden rounded-2xl">
+            <div class="bg-notte-card border border-neutral-800/80 group flex flex-col justify-between hover:border-notte-gold/50 transition duration-500 overflow-hidden rounded-lg">
                 
                 <!-- Gambar Produk -->
                 <div class="aspect-[4/5] overflow-hidden border-b border-neutral-800 relative bg-neutral-900">
@@ -79,7 +79,7 @@
                     <div class="pt-4 border-t border-neutral-800/80 flex justify-between items-center mt-auto">
                         <span class="font-serif-title text-xl text-gray-200">Rp{{ number_format($menu->selling_price, 0, ',', '.') }}</span>
                         <button onclick="openModifierModal({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{$menu->selling_price }})" 
-                            class="text-xs font-bold border border-neutral-700 text-gray-300 hover:border-notte-gold hover:text-notte-gold px-5 py-2.5 rounded-full transition uppercase tracking-wider">
+                            class="text-xs font-bold border border-neutral-700 text-gray-300 hover:border-notte-gold hover:text-notte-gold px-5 py-2.5 rounded-md transition uppercase tracking-wider">
                             + Tambah
                         </button>
                     </div>
@@ -93,7 +93,7 @@
 
     <!-- MODAL POP-UP MODIFIER -->
     <div id="modifier-modal" class="fixed inset-0 bg-notte-black/90 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-notte-card border border-neutral-800 w-full max-w-md p-8 rounded-2xl shadow-2xl space-y-6">
+        <div class="bg-notte-card border border-neutral-800 w-full max-w-md p-8 rounded-lg shadow-sm space-y-6">
             <div class="flex justify-between items-center border-b border-neutral-800 pb-4">
                 <div>
                     <span class="text-[10px] font-mono uppercase tracking-widest text-notte-gold block">Custom Order</span>
@@ -131,7 +131,7 @@
                     <span class="text-[10px] text-gray-500 uppercase block">Total Harga</span>
                     <span id="modal-menu-price" class="font-serif-title text-xl text-notte-gold">Rp0</span>
                 </div>
-                <button type="button" onclick="confirmAddToCart()" class="bg-notte-gold text-black font-extrabold text-xs uppercase tracking-widest px-6 py-3.5 rounded-full hover:bg-amber-600 transition">
+                <button type="button" onclick="confirmAddToCart()" class="bg-notte-gold text-black font-extrabold text-xs uppercase tracking-widest px-6 py-3.5 rounded-md hover:bg-amber-600 transition">
                     Masukkan Keranjang
                 </button>
             </div>
@@ -183,7 +183,7 @@
                     <span class="text-xs text-gray-400 uppercase tracking-wider">Total Pembayaran</span>
                     <span id="cart-total" class="font-serif-title text-2xl text-notte-gold">Rp0</span>
                 </div>
-                <button type="submit" form="checkout-form" class="w-full bg-notte-gold text-black font-extrabold text-xs tracking-widest uppercase py-4 rounded-full hover:bg-amber-600 transition shadow-lg">
+                <button type="submit" form="checkout-form" class="w-full bg-notte-gold text-black font-extrabold text-xs tracking-widest uppercase py-4 rounded-md hover:bg-amber-600 transition">
                     Konfirmasi Checkout
                 </button>
             </div>

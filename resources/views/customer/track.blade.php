@@ -36,7 +36,7 @@
     </div>
     @endif
 
-    <div class="max-w-5xl mx-auto w-full my-auto bg-[#121212] border border-neutral-800/80 rounded-3xl shadow-2xl relative overflow-hidden">
+    <div class="max-w-5xl mx-auto w-full my-auto bg-[#121212] border border-neutral-800/80 rounded-lg shadow-sm relative overflow-hidden">
         <div class="grid grid-cols-1 lg:grid-cols-12">
             
             <!-- KOLOM KIRI: BREAKDOWN PESANAN -->
@@ -80,10 +80,10 @@
             <div class="lg:col-span-5 p-6 md:p-12 bg-[#0a0a0a] flex flex-col justify-center">
                 
                 @if(session('error'))
-                    <div class="mb-6 p-4 bg-rose-950/40 border border-rose-800/60 rounded-xl text-rose-400 text-xs font-bold text-center">{{ session('error') }}</div>
+                    <div class="mb-6 p-4 bg-rose-950/40 border border-rose-800/60 rounded-md text-rose-400 text-xs font-bold text-center">{{ session('error') }}</div>
                 @endif
                 @if(session('success'))
-                    <div class="mb-6 p-4 bg-emerald-950/40 border border-emerald-800/60 rounded-xl text-emerald-400 text-xs font-bold text-center">{{ session('success') }}</div>
+                    <div class="mb-6 p-4 bg-emerald-950/40 border border-emerald-800/60 rounded-md text-emerald-400 text-xs font-bold text-center">{{ session('success') }}</div>
                 @endif
 
                 @if($order->status != 'pending_payment')
@@ -117,7 +117,7 @@
 
                 <div class="space-y-6">
                     <div class="text-center">
-                        <div class="inline-block p-4 bg-white rounded-xl shadow-2xl mb-2">
+                        <div class="inline-block p-4 bg-white rounded-md shadow-sm mb-2">
                             <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=NOTTE-COFFEE-PAYMENT-{{ $order->invoice_number }}" alt="QRIS NOTTE" class="w-32 h-32 md:w-40 md:h-40 mx-auto">
                         </div>
                         <p class="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-wider">Scan QRIS NOTTE Coffee</p>
@@ -125,7 +125,7 @@
 
                     <form action="{{ route('customer.order.uploadProof', $order->invoice_number) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                         @csrf
-                        <label for="payment_proof" class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-neutral-700 hover:border-[#c5a880] bg-[#121212] rounded-xl cursor-pointer transition p-4 text-center group active:scale-95">
+                        <label for="payment_proof" class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-neutral-700 hover:border-[#c5a880] bg-[#121212] rounded-md cursor-pointer transition p-4 text-center group active:scale-95">
                             <svg class="w-6 h-6 text-gray-500 group-hover:text-[#c5a880] mb-2 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                             <span id="file-label-text" class="text-[11px] font-bold text-gray-400 group-hover:text-[#c5a880] transition uppercase tracking-wider">Upload Bukti Bayar</span>
                             <span class="text-[9px] text-gray-600 mt-1">Format: JPG, PNG (Maks 5MB)</span>
@@ -141,7 +141,7 @@
 
                 <!-- JIKA SUDAH BAYAR / DI-VERIFIKASI -->
                 @if($order->status != 'pending_payment')
-                <div class="p-6 bg-[#121212] border border-neutral-800 rounded-xl text-center space-y-4 shadow-inner">
+                <div class="p-6 bg-[#121212] border border-neutral-800 rounded-md text-center space-y-4">
                     @if($order->payment_proof)
                     <div class="w-24 h-24 mx-auto rounded-lg overflow-hidden border border-neutral-700 shadow-md">
                         <img src="{{ asset('uploads/payment_proofs/' . $order->payment_proof) }}" alt="Bukti Transfer" class="w-full h-full object-cover grayscale opacity-70">
