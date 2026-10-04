@@ -30,6 +30,11 @@ class AuthController extends Controller
             // Validasi ketat: Hanya admin/cashier yang boleh masuk lewat guard ini
             if (in_array($role, ['admin', 'cashier'])) {
                 $request->session()->regenerate();
+
+                if ($request->input('redirect_to') === 'menu' || $request->input('redirect') === 'menu') {
+                    return redirect()->route('customer.menu')->with('success', 'Berhasil login! Silakan lanjutkan pesanan kamu.');
+                }
+
                 return redirect()->intended(route('admin.dashboard'));
             }
             
@@ -61,7 +66,12 @@ class AuthController extends Controller
             // Validasi ketat: Hanya customer yang boleh masuk lewat guard ini
             if ($role === 'customer') {
                 $request->session()->regenerate();
-                return redirect()->route('customer.account')->with('success', 'Berhasil masuk!');
+
+                if ($request->input('redirect_to') === 'menu' || $request->input('redirect') === 'menu') {
+                    return redirect()->route('customer.menu')->with('success', 'Berhasil login! Silakan lanjutkan pesanan kamu.');
+                }
+
+                return redirect()->intended(route('customer.account'))->with('success', 'Berhasil masuk!');
             }
             
             // Jika admin nyasar login di halaman customer frontend, tendang keluar

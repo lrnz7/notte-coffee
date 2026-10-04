@@ -26,7 +26,7 @@
                 <img src="{{ asset('images/logo-notte.png') }}" alt="NOTTE Logo" class="h-10 mx-auto mb-4 object-contain">
             </a>
             <span class="text-[10px] font-mono uppercase tracking-[0.2em] text-notte-gold block">Customer Portal</span>
-            <p class="text-xs text-gray-400 mt-1">Dapatkan Diskon 50% untuk pesanan pertama lu!</p>
+            <p class="text-xs text-gray-400 mt-1">Dapatkan Diskon 50% untuk pesanan pertama kamu!</p>
         </div>
 
         <!-- ALERT ERROR & SUCCESS -->

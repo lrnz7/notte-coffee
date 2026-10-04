@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $order->invoice_number }} — NOTTE Coffee</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-notte.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -149,9 +150,9 @@
                     @endif
                     
                     @if($order->status == 'waiting_verification')
-                        <p class="text-xs text-gray-400 font-semibold leading-relaxed">Kasir sedang memverifikasi pembayaran lu.<br>Layar ini akan otomatis update.</p>
+                        <p class="text-xs text-gray-400 font-semibold leading-relaxed">Kasir sedang memverifikasi pembayaran kamu.<br>Layar ini akan otomatis update.</p>
                     @elseif($order->status == 'processing')
-                        <p class="text-xs text-amber-500 font-bold leading-relaxed">Dapur sedang meracik pesanan lu.<br><span class="text-gray-400 font-normal">Tunggu sampai layar berubah jadi hijau.</span></p>
+                        <p class="text-xs text-amber-500 font-bold leading-relaxed">Dapur sedang meracik pesanan kamu.<br><span class="text-gray-400 font-normal">Tunggu sampai layar berubah jadi hijau.</span></p>
                     @endif
                 </div>
                 @endif
@@ -174,6 +175,10 @@
             }
         }
         
+        // Simpan active_invoice ke localStorage
+        localStorage.setItem('active_invoice', '{{ $order->invoice_number }}');
+        localStorage.setItem('status_{{ $order->invoice_number }}', '{{ $order->status }}');
+
         // AJAX INVISIBLE POLLING (Cek status setiap 3 detik tanpa refresh layar)
         const currentStatus = document.getElementById('order-status-data').getAttribute('data-status');
         

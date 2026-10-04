@@ -27,28 +27,37 @@
 @include('admin.partials.date_filter')
 
 <!-- Metric Cards: Financial P&L & Omnichannel Analytics -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-    <!-- Gross Profit -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+    <!-- Card 1: Gross Revenue -->
     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-        <div class="flex items-center justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <div class="flex items-center justify-between text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+            <span>Gross Revenue</span>
+        </div>
+        <h3 class="text-2xl font-extrabold text-amber-600 mt-2">Rp{{ number_format($grossRevenue ?? $totalRevenue, 0, ',', '.') }}</h3>
+        <p class="text-xs text-gray-500 mt-1">Total Penjualan Sebelum HPP & Biaya</p>
+    </div>
+
+    <!-- Card 2: Gross Profit -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+        <div class="flex items-center justify-between text-[11px] font-bold text-gray-400 uppercase tracking-wider">
             <span>Gross Profit</span>
         </div>
         <h3 class="text-2xl font-extrabold text-emerald-600 mt-2">Rp{{ number_format($grossProfit, 0, ',', '.') }}</h3>
-        <p class="text-xs text-gray-500 mt-1">Omzet (Rp{{ number_format($totalRevenue, 0, ',', '.') }}) - HPP (Rp{{ number_format($totalHpp, 0, ',', '.') }})</p>
+        <p class="text-xs text-gray-500 mt-1">Omzet - HPP (Rp{{ number_format($totalHpp, 0, ',', '.') }})</p>
     </div>
 
-    <!-- Operational Expenditure (Opex) -->
+    <!-- Card 3: Operational Expenditure (Opex) -->
     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-        <div class="flex items-center justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <div class="flex items-center justify-between text-[11px] font-bold text-gray-400 uppercase tracking-wider">
             <span>Pengeluaran</span>
         </div>
         <h3 class="text-2xl font-extrabold text-rose-600 mt-2">Rp{{ number_format($opex, 0, ',', '.') }}</h3>
-        <p class="text-xs text-gray-500 mt-1">Total Biaya Operasional (Cash Flow Expense)</p>
+        <p class="text-xs text-gray-500 mt-1">Total Biaya Operasional (Opex)</p>
     </div>
 
-    <!-- Net Profit -->
+    <!-- Card 4: Net Profit -->
     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-        <div class="flex items-center justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <div class="flex items-center justify-between text-[11px] font-bold text-gray-400 uppercase tracking-wider">
             <span>Net Profit</span>
         </div>
         <h3 class="text-2xl font-extrabold {{ $netProfit >= 0 ? 'text-blue-600' : 'text-rose-700' }} mt-2">
@@ -57,12 +66,12 @@
         <p class="text-xs text-gray-500 mt-1">Laba Kotor - Operasional</p>
     </div>
 
-    <!-- Omnichannel Sales Split -->
+    <!-- Card 5: Omnichannel Sales Split -->
     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Penjualan</p>
+        <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Penjualan</p>
         <div class="space-y-1.5 text-xs">
             <div class="flex justify-between items-center">
-                <span class="font-medium text-gray-600">POS (Offline Store):</span>
+                <span class="font-medium text-gray-600">POS (Offline):</span>
                 <span class="font-bold text-gray-800">Rp{{ number_format($omnichannelSplit->get('pos')->total_sales ?? 0, 0, ',', '.') }}</span>
             </div>
             <div class="flex justify-between items-center">

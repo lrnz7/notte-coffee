@@ -24,12 +24,14 @@ class AdminController extends Controller
         $completedOrdersQuery = Order::whereIn('status', ['completed', 'processing']);
         $this->applyDateFilter($completedOrdersQuery, $dateFilter, 'created_at');
 
-        $totalRevenue = (clone $completedOrdersQuery)->sum('total_amount');
+        // Gross Revenue / Total Penjualan Kotor
+        $grossRevenue = (clone $completedOrdersQuery)->sum('total_amount');
+        $totalRevenue = $grossRevenue;
         // Snapshot HPP
         $totalHpp = (clone $completedOrdersQuery)->selectRaw('SUM(CASE WHEN total_hpp > 0 THEN total_hpp ELSE total_cogs END) as aggregate')->value('aggregate') ?? 0;
         
         // 1a. Gross Profit
-        $grossProfit = $totalRevenue - $totalHpp;
+        $grossProfit = $grossRevenue - $totalHpp;
 
         // 1b. Operational Expenditure (Opex) dengan Filter Tanggal
         $opexQuery = CashFlow::whereIn('type', ['expense', 'outflow'])
@@ -80,6 +82,7 @@ class AdminController extends Controller
         });
 
         return view('admin.dashboard', compact(
+            'grossRevenue',
             'totalRevenue',
             'totalHpp',
             'grossProfit',

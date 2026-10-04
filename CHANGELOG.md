@@ -120,3 +120,18 @@ Semua riwayat pengembangan, perbaikan *bug*, dan penambahan fitur aplikasi NOTTE
 - **Strict UI Audit & Anti-AI Slop Cleanup:**
   - **Admin ERP & POS (`pos/index.blade.php`):** Pengantian badge pastel dan animasi kedap-kedip `animate-pulse` dengan *Sleek Slate/Dark Utility Style*, penggunaan sudut tegas (`rounded-md`), dan pembersihan emoji/teks *fluff*.
   - **Customer Frontend (`menu.blade.php`, `store.blade.php`, `track.blade.php`):** Pemangkasan *oversized rounded* (`rounded-2xl/3xl` ke `rounded-md/lg`), perbaikan *heavy shadow*, serta penyelarasan penuh tombol *navbar* `/menu` (`rounded-full`) agar persis sama dengan *landing page*.
+
+
+## 🚀 [2.1.0] - 04 October 2026
+*Auth Guard Keranjang, Peningkatan UI Live Tracker, Gross Revenue, dan Patch 419*
+
+### ➕ Added (Fitur Baru)
+- **Auth Guard Keranjang Belanja (`menu.blade.php`):** Proteksi akses *frontend* yang mencegah pengguna *guest* (belum login) menambahkan menu ke keranjang atau membuka modal varian, serta pengalihan otomatis ke halaman *login* dengan parameter khusus.
+- **Post-Login Smart Redirect (`AuthController.php` & `login.blade.php`):** Fitur penelusuran niat (*intent*) pengguna yang mengarahkan kembali pelanggan ke halaman katalog menu disertai pesan sambutan sukses setelah proses autentikasi berhasil.
+- **Branding Favicon Menyeluruh:** Pemasangan ikon resmi NOTTE Coffee (`logo-notte.png`) secara konsisten pada tag `<head>` di seluruh halaman *frontend* (Landing, Menu, Profil Akun, hingga Pelacakan Pesanan).
+- **Indikator Omset Kotor / Gross Revenue (`DashboardController.php` & `CashFlowController.php`):** Penambahan metrik finansial rekapitulasi total penjualan kotor (`SUM(total_amount)` dari seluruh pesanan valid) sebelum dipotong HPP dan biaya operasional, yang ditampilkan secara berdampingan di Dashboard Admin dan Laporan Keuangan.
+- **Web Audio API Chime (`menu.blade.php`):** Notifikasi suara tiga nada naik (*A5 → C6 → E6*) yang dipicu secara otomatis saat status pesanan berubah menjadi `completed` sebagai pengganti getar seluler yang sering diblokir oleh kebijakan sistem peramban.
+
+### 🔧 Fixed (Perbaikan Bug)
+- **Fix CSRF / 419 Page Expired (`.env`):** Penyelarasan variabel konfigurasi `APP_URL` ke domain lokal Laragon (`http://notte-coffee.test`) untuk memperbaiki kecocokan *cookie session* pada tombol aksi "Proses Dapur" di panel admin.
+- **Stabilisasi Tata Letak Live Tracker (`menu.blade.php`):** Perbaikan posisi *floating widget* bagian bawah layar dengan menghapus kelas CSS yang menyebabkan pergeseran layout (*layout shift* / tumpang tindih pada gambar produk), serta mengubah animasi *bounce* menjadi border tipis elegan saat status pesanan selesai.

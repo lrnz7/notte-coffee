@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu — NOTTE Coffee</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-notte.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +25,7 @@
         #leaflet-map { height: 220px; width: 100%; border-radius: 0.75rem; z-index: 10; }
     </style>
 </head>
-<body class="bg-notte-black min-h-screen flex flex-col justify-between antialiased selection:bg-amber-900 selection:text-amber-100 relative pb-20">
+<body class="bg-notte-black min-h-screen flex flex-col justify-between antialiased selection:bg-amber-900 selection:text-amber-100 relative pb-28">
 
     <!-- BANNER DISKON -->
     @auth
@@ -37,26 +38,24 @@
     @endauth
 
     <!-- FLOATING LIVE TRACKER -->
-    @if(session('active_invoice'))
-    <div id="live-tracker-bar" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[90%] max-w-lg bg-[#121212]/95 backdrop-blur-md border border-[#c5a880]/60 p-4 rounded-md shadow-lg flex items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
-            <span class="relative flex h-3 w-3">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c5a880] opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-3 w-3 bg-[#c5a880]"></span>
+    <div id="live-tracker-bar" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md bg-[#121212]/95 backdrop-blur-md border border-[#c5a880]/60 p-3.5 sm:p-4 rounded-xl shadow-2xl flex items-center justify-between gap-3 transition-all duration-300">
+        <div class="flex items-center gap-3 min-w-0">
+            <span class="relative flex h-3 w-3 shrink-0">
+              <span id="tracker-ping-dot" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c5a880] opacity-75"></span>
+              <span id="tracker-solid-dot" class="relative inline-flex rounded-full h-3 w-3 bg-[#c5a880]"></span>
             </span>
-            <div>
-                <span class="text-[9px] font-mono uppercase tracking-widest text-gray-400 block">Pesanan Aktif: {{ session('active_invoice') }}</span>
-                <p id="live-status-text" class="text-xs font-bold text-gray-200">Memuat status pesanan...</p>
+            <div class="truncate">
+                <span id="live-invoice-label" class="text-[9px] font-mono uppercase tracking-widest text-gray-400 block truncate">Pesanan Aktif: {{ session('active_invoice', '') }}</span>
+                <p id="live-status-text" class="text-xs font-bold text-gray-200 truncate">Memuat status pesanan...</p>
             </div>
         </div>
-        <div class="flex items-center gap-3">
-            <a href="{{ route('customer.order.track', session('active_invoice')) }}" class="bg-[#c5a880] text-black font-extrabold text-[10px] px-4 py-2 rounded-md uppercase tracking-wider">
+        <div class="flex items-center gap-2 shrink-0">
+            <a id="live-tracker-link" href="{{ session('active_invoice') ? route('customer.order.track', session('active_invoice')) : '#' }}" class="bg-[#c5a880] text-black font-extrabold text-[10px] px-3.5 py-2 rounded-lg uppercase tracking-wider transition hover:bg-amber-600 shadow">
                 Struk →
             </a>
-            <button onclick="closeTracker()" class="text-gray-400 font-bold px-1 text-sm">✕</button>
+            <button type="button" onclick="closeTracker()" class="text-gray-400 hover:text-white font-bold p-1 text-sm leading-none" title="Tutup">✕</button>
         </div>
     </div>
-    @endif
 
     <!-- TOAST NOTIFICATION -->
     <div id="toast-notification" class="fixed top-24 right-6 z-[60] transform translate-x-[150%] opacity-0 transition-all duration-500 ease-out bg-notte-card border border-notte-gold text-gray-200 px-6 py-4 rounded-md shadow-sm flex items-center gap-4">
@@ -315,6 +314,9 @@
     </footer>
 
     <script>
+        const isAuthenticated = {{ Auth::check() ? 'true' : 'false' }};
+        const loginUrl = "{{ route('login', ['message' => 'login_required', 'redirect' => 'menu']) }}";
+
         let cart = {};
         let activeItem = null;
         let selectedIce = 'Normal Ice';
@@ -332,7 +334,7 @@
             
             // Kalau keranjang kosong, cegah submit
             if (Object.keys(cart).length === 0) {
-                alert("Keranjang lu masih kosong, Bro!");
+                alert("Keranjang kamu masih kosong!");
                 return false;
             }
 
@@ -420,7 +422,7 @@
                     (error) => alert("Gagal akses GPS. Pastikan izin lokasi aktif atau ketik manual/geser peta.")
                 );
             } else {
-                alert("Browser lu gak dukung GPS.");
+                alert("Browser kamu gak mendukung GPS.");
             }
         }
 
@@ -432,7 +434,7 @@
                 userMarker.setLatLng([lat, lng]);
             } else {
                 userMarker = L.marker([lat, lng], { draggable: true }).addTo(map)
-                    .bindPopup('Geser pin ini ke titik pas rumah lu').openPopup();
+                    .bindPopup('Geser pin ini ke titik pas rumah kamu').openPopup();
                 
                 userMarker.on('dragend', function(e) {
                     const pos = userMarker.getLatLng();
@@ -547,6 +549,10 @@
 
         // TAMBAH LANGSUNG (FOOD / DESSERT / 1 LITER)
         function addDirectToCart(id, name, price) {
+            if (!isAuthenticated) {
+                window.location.href = loginUrl;
+                return;
+            }
             const cartKey = `${id}_Direct`;
             if (cart[cartKey]) cart[cartKey].quantity += 1;
             else cart[cartKey] = { menu_id: id, name: name, price: price, quantity: 1, note: '-' };
@@ -555,6 +561,10 @@
         }
 
         function openModifierModal(id, name, price) {
+            if (!isAuthenticated) {
+                window.location.href = loginUrl;
+                return;
+            }
             activeItem = { id: id, name: name, price: price };
             selectedIce = 'Normal Ice'; selectedSugar = 'Normal Sugar';
             document.getElementById('modal-custom-note').value = '';
@@ -653,78 +663,134 @@
         }
 
         // Live Polling Status Pesanan Aktif
-        @if(session('active_invoice'))
-        let pollingInterval;
-        const currentInvoice = "{{ session('active_invoice') }}";
+        let activeInvoice = "{{ session('active_invoice') }}" || localStorage.getItem('active_invoice');
+        if ("{{ session('active_invoice') }}") {
+            localStorage.setItem('active_invoice', "{{ session('active_invoice') }}");
+        }
 
-        if (localStorage.getItem('closed_tracker_' + currentInvoice) === 'true') {
+        let pollingInterval = null;
+        let lastKnownStatus = activeInvoice ? localStorage.getItem('status_' + activeInvoice) : null;
+
+        function initLiveTracker() {
+            if (!activeInvoice) return;
+            if (localStorage.getItem('closed_tracker_' + activeInvoice) === 'true') return;
+
             const bar = document.getElementById('live-tracker-bar');
-            if (bar) bar.remove();
+            if (bar) {
+                bar.classList.remove('hidden');
+                document.getElementById('live-invoice-label').innerText = 'Pesanan Aktif: ' + activeInvoice;
+                document.getElementById('live-tracker-link').href = '/order/' + activeInvoice;
+            }
+
+            checkLiveStatus();
+            if (!pollingInterval) {
+                pollingInterval = setInterval(checkLiveStatus, 4000);
+            }
         }
 
         function closeTracker() {
-            localStorage.setItem('closed_tracker_' + currentInvoice, 'true');
+            if (activeInvoice) {
+                localStorage.setItem('closed_tracker_' + activeInvoice, 'true');
+            }
             const bar = document.getElementById('live-tracker-bar');
-            if (bar) bar.remove();
+            if (bar) bar.classList.add('hidden');
             if (pollingInterval) clearInterval(pollingInterval);
         }
 
         function checkLiveStatus() {
-            if (localStorage.getItem('closed_tracker_' + currentInvoice) === 'true') return;
+            if (!activeInvoice) return;
+            if (localStorage.getItem('closed_tracker_' + activeInvoice) === 'true') return;
 
-            fetch('/order/' + currentInvoice)
-                .then(res => res.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    const statusData = doc.getElementById('order-status-data');
-                    
-                    if (statusData) {
-                        const status = statusData.getAttribute('data-status');
-                        const bar = document.getElementById('live-tracker-bar');
-                        const textEl = document.getElementById('live-status-text');
-                        const dot = document.querySelector('#live-tracker-bar .animate-ping');
-                        const solidDot = dot ? dot.nextElementSibling : null;
+            fetch('/order/' + activeInvoice, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Order not found');
+                return res.text();
+            })
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const statusData = doc.getElementById('order-status-data');
+                
+                if (statusData) {
+                    const status = statusData.getAttribute('data-status');
+                    const bar = document.getElementById('live-tracker-bar');
+                    const textEl = document.getElementById('live-status-text');
+                    const pingDot = document.getElementById('tracker-ping-dot');
+                    const solidDot = document.getElementById('tracker-solid-dot');
 
-                        if (!bar) return;
+                    if (!bar) return;
 
-                        if (status === 'completed') {
-                            textEl.innerText = "Pesanan Selesai! Silakan ambil di tenant secara langsung!.";
-                            bar.classList.add('border-emerald-500', 'shadow-[0_0_30px_rgba(16,185,129,0.2)]');
-                            bar.classList.remove('border-[#c5a880]/60');
-                            if(dot && solidDot) {
-                                dot.classList.replace('bg-[#c5a880]', 'bg-emerald-500');
-                                solidDot.classList.replace('bg-[#c5a880]', 'bg-emerald-500');
-                            }
-                            clearInterval(pollingInterval);
-                        } else if (status === 'processing') {
-                            textEl.innerText = "Pesanan kamu sedang diracik oleh Barista kami";
-                            if(dot && solidDot) {
-                                dot.classList.replace('bg-[#c5a880]', 'bg-blue-500');
-                                solidDot.classList.replace('bg-[#c5a880]', 'bg-blue-500');
-                            }
-                        } else if (status === 'cancelled') {
-                            textEl.innerText = "Pesanan Dibatalkan oleh admin. Silakan buat pesanan baru.";
-                            bar.classList.add('border-rose-500', 'shadow-[0_0_30px_rgba(244,63,94,0.2)]');
-                            bar.classList.remove('border-[#c5a880]/60');
-                            if(dot && solidDot) {
-                                dot.classList.replace('bg-[#c5a880]', 'bg-rose-500');
-                                solidDot.classList.replace('bg-[#c5a880]', 'bg-rose-500');
-                            }
-                            clearInterval(pollingInterval);
-                        } else if (status === 'waiting_verification') {
-                            textEl.innerText = "Menunggu kasir verifikasi pembayaran kamu.";
+                    localStorage.setItem('status_' + activeInvoice, status);
+
+                    if (status === 'completed') {
+                        textEl.innerText = "Pesanan Selesai! Silakan ambil pesanan kamu.";
+                        // FIX: Stable fixed positioning — no animate-bounce, no oversized shadow
+                        bar.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md bg-[#062412]/95 backdrop-blur-md border border-emerald-500 p-3.5 sm:p-4 rounded-xl shadow-lg flex items-center justify-between gap-3 transition-all duration-500";
+                        if (pingDot && solidDot) {
+                            pingDot.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75";
+                            solidDot.className = "relative inline-flex rounded-full h-3 w-3 bg-emerald-500";
                         }
+                        if (lastKnownStatus !== 'completed') {
+                            // Web Audio API chime — primary alert for mobile browsers
+                            try {
+                                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                                const playTone = (freq, startAt, duration, gain = 0.4) => {
+                                    const osc = ctx.createOscillator();
+                                    const gainNode = ctx.createGain();
+                                    osc.connect(gainNode);
+                                    gainNode.connect(ctx.destination);
+                                    osc.type = 'sine';
+                                    osc.frequency.setValueAtTime(freq, ctx.currentTime + startAt);
+                                    gainNode.gain.setValueAtTime(gain, ctx.currentTime + startAt);
+                                    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startAt + duration);
+                                    osc.start(ctx.currentTime + startAt);
+                                    osc.stop(ctx.currentTime + startAt + duration);
+                                };
+                                playTone(880, 0.0,  0.18); // A5 — first ding
+                                playTone(1046, 0.2, 0.25); // C6 — second ding (higher)
+                                playTone(1318, 0.45, 0.35); // E6 — final bright note
+                            } catch (e) { /* AudioContext not available — silent fallback */ }
+                            // Vibration as secondary fallback
+                            if ("vibrate" in navigator) {
+                                navigator.vibrate([500, 200, 200, 100, 200, 100, 200]);
+                            }
+                        }
+                        lastKnownStatus = 'completed';
+                        clearInterval(pollingInterval);
+                    } else if (status === 'processing') {
+                        textEl.innerText = "Pesanan kamu sedang diracik oleh Barista";
+                        bar.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md bg-[#121212]/95 backdrop-blur-md border border-blue-500/60 p-3.5 sm:p-4 rounded-xl shadow-lg flex items-center justify-between gap-3";
+                        if (pingDot && solidDot) {
+                            pingDot.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75";
+                            solidDot.className = "relative inline-flex rounded-full h-3 w-3 bg-blue-500";
+                        }
+                        lastKnownStatus = 'processing';
+                    } else if (status === 'cancelled') {
+                        textEl.innerText = "Pesanan Dibatalkan oleh admin/staff.";
+                        bar.className = "fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md bg-rose-950/95 backdrop-blur-md border border-rose-600 p-3.5 sm:p-4 rounded-xl shadow-lg flex items-center justify-between gap-3";
+                        if (pingDot && solidDot) {
+                            pingDot.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75";
+                            solidDot.className = "relative inline-flex rounded-full h-3 w-3 bg-rose-500";
+                        }
+                        lastKnownStatus = 'cancelled';
+                        clearInterval(pollingInterval);
+                    } else if (status === 'waiting_verification') {
+                        textEl.innerText = "Menunggu kasir memverifikasi pembayaran kamu.";
+                        lastKnownStatus = 'waiting_verification';
+                    } else {
+                        textEl.innerText = "Menunggu pembayaran QRIS.";
+                        lastKnownStatus = status;
                     }
-                })
-                .catch(err => console.log(err));
+                }
+            })
+            .catch(err => {
+                console.log(err);
+            });
         }
 
-        if (localStorage.getItem('closed_tracker_' + currentInvoice) !== 'true') {
-            pollingInterval = setInterval(checkLiveStatus, 5000);
-            checkLiveStatus();
-        }
-        @endif
+        initLiveTracker();
     </script>
 </body>
 </html>

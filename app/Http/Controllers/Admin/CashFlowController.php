@@ -27,11 +27,13 @@ class CashFlowController extends Controller
         $effectiveOrders = Order::whereIn('status', ['completed', 'processing']);
         $this->applyDateFilter($effectiveOrders, $dateFilter, 'created_at');
         
-        $totalRevenue = (clone $effectiveOrders)->sum('total_amount');
+        // Gross Revenue / Total Penjualan Kotor (Total Sales sebelum dikurangi HPP dan Beban Operasional)
+        $grossRevenue = (clone $effectiveOrders)->sum('total_amount');
+        $totalRevenue = $grossRevenue;
         $totalHpp = (clone $effectiveOrders)->selectRaw('SUM(CASE WHEN total_hpp > 0 THEN total_hpp ELSE total_cogs END) as aggregate')->value('aggregate') ?? 0;
         
         // 2a. Gross Profit = Revenue - HPP
-        $grossProfit = $totalRevenue - $totalHpp;
+        $grossProfit = $grossRevenue - $totalHpp;
 
         // 2b. Opex
         $opexQuery = CashFlow::whereIn('type', ['expense', 'outflow'])
@@ -84,7 +86,7 @@ class CashFlowController extends Controller
         }
 
         return view('admin.cash_flows.index', compact(
-            'cashFlows', 'totalInflow', 'totalOutflow', 'totalRevenue', 'totalHpp', 
+            'cashFlows', 'totalInflow', 'totalOutflow', 'grossRevenue', 'totalRevenue', 'totalHpp', 
             'grossProfit', 'opex', 'netProfit', 'omnichannelSplit',
             'chartDates', 'chartInflows', 'chartOutflows',
             'catLabels', 'catTotals', 'dateFilter'
