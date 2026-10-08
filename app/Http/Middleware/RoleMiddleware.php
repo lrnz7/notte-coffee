@@ -11,11 +11,15 @@ class RoleMiddleware
 {
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        if (!Auth::check()) {
+        // Check admin guard first, then fallback to web guard or current request user
+        $user = Auth::guard('admin')->user() ?? Auth::guard('web')->user() ?? $request->user();
+
+        if (!$user) {
+            if ($request->is('admin') || $request->is('admin/*')) {
+                return redirect()->route('admin.login');
+            }
             return redirect()->route('login');
         }
-
-        $user = Auth::user();
 
         // Cek apakah role user ada di dalam daftar role yang diperbolehkan
         if (in_array($user->role, $roles)) {

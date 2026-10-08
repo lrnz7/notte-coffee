@@ -134,4 +134,16 @@ Semua riwayat pengembangan, perbaikan *bug*, dan penambahan fitur aplikasi NOTTE
 
 ### 🔧 Fixed (Perbaikan Bug)
 - **Fix CSRF / 419 Page Expired (`.env`):** Penyelarasan variabel konfigurasi `APP_URL` ke domain lokal Laragon (`http://notte-coffee.test`) untuk memperbaiki kecocokan *cookie session* pada tombol aksi "Proses Dapur" di panel admin.
-- **Stabilisasi Tata Letak Live Tracker (`menu.blade.php`):** Perbaikan posisi *floating widget* bagian bawah layar dengan menghapus kelas CSS yang menyebabkan pergeseran layout (*layout shift* / tumpang tindih pada gambar produk), serta mengubah animasi *bounce* menjadi border tipis elegan saat status pesanan selesai.
+- **Stabilisasi Tata Letak Live Tracker (`menu.blade.php`):** Perbaikan posisi *floating widget* bagian bawah layar dengan menghapus kelas CSS yang menyebabkan pergeseran layout (*layout shift* / tumpang tindih pada gambar produk), serta mengubah animasi *bounce* menjadi border tipis elegan saat status pesanan selesai.  
+
+
+## 🛡️ [2.1.1] - 08 October 2026
+*Perbaikan Isolasi Autentikasi Dual-Guard & Redireksi Portal Admin*
+
+### 🔧 Fixed (Perbaikan Bug & Keamanan)
+- **Fix Admin Login Redirect Loop / Bounce:** Memperbaiki bug HTTP 302 di mana pengakses rute `/admin/login` atau rute terproteksi `/admin/*` kepental balik ke *landing page* (`/`).
+- **Konfigurasi Multi-Guard Kernel (`bootstrap/app.php`):**
+  - Menerapkan *callback* `$middleware->redirectGuestsTo()` berbasis awalan rute `/admin/*` agar pengguna *unauthenticated* diarahkan secara presisi ke `admin.login`.
+  - Menerapkan *callback* `$middleware->redirectUsersTo()` untuk mengarahkan staf yang sudah terautentikasi di guard `admin` langsung ke `admin.dashboard`.
+- **Sensitivitas Guard RoleMiddleware (`RoleMiddleware.php`):** Mengubah inspeksi autentikasi agar memprioritaskan `Auth::guard('admin')` sebelum jatuh balik (*fallback*) ke guard `web` agar staf/admin tidak dianggap sebagai *guest* biasa.
+- **Isolasi Rute Autentikasi (`routes/web.php`):** Pemisahan tegas grup rute antara `guest:web` (pelanggan) dan `guest:admin` (staf/admin) untuk mencegah bentrokan sesi antar *guard*.

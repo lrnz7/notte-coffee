@@ -11,16 +11,18 @@ use Illuminate\Support\Facades\Schema;
 
 class MasterDataERPSeeder extends Seeder
 {
-    public function run()
-    {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        Recipe::truncate();
-        Ingredient::truncate();
-        Menu::truncate();
-        if (Schema::hasTable('materials')) {
-            DB::table('materials')->truncate();
-        }
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+public function run()
+{
+    DB::statement('SET FOREIGN_KEY_CHECKS=0'); // Diubah tanpa titik koma
+    Recipe::truncate();
+    Ingredient::truncate();
+    Menu::truncate();
+    if (Schema::hasTable('materials')) {
+        DB::table('materials')->truncate();
+    }
+    DB::statement('SET FOREIGN_KEY_CHECKS=1'); // Diubah tanpa titik koma
+    
+    // ... sisa kodingan data ingredients & menu ...
 
         // 1. MASTER BAHAN BAKU (HARGA MODAL LOGIS & MARGIN BAGUS)
         $ingredientsData = [

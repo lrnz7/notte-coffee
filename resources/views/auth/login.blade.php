@@ -27,7 +27,7 @@
             </div>
         @endif
 
-        <form action="{{ route('login.post') }}" method="POST" class="space-y-4">
+        <form action="{{ route('admin.login.post') }}" method="POST" class="space-y-4">
             @csrf
             @if(request('redirect'))
                 <input type="hidden" name="redirect_to" value="{{ request('redirect', 'menu') }}">
